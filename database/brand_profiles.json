@@ -1,0 +1,374 @@
+{
+  "_meta": {
+    "description": "Brand profiles: how to recognise a phone's manufacturer from the packages installed on it, plus what is worth knowing before planning a removal.",
+    "version": "2.0.0",
+    "total_brands": 13
+  },
+  "brands": {
+    "asus": {
+      "display_name": "ASUS",
+      "aliases": [
+        "asus",
+        "zenfone",
+        "rog"
+      ],
+      "detection_prefixes": [
+        "com.asus",
+        "com.zenui"
+      ],
+      "os_name": "ZenUI",
+      "known_models": [
+        "Zenfone",
+        "ROG Phone"
+      ],
+      "special_notes": "ZenUI is close to stock Android, so there is less to remove here than on most brands. The duplicated ASUS gallery, file manager and recorder are the main targets. On a ROG Phone, Game Genie (com.asus.gamewidget) is the feature people actually bought the phone for, so ask first.",
+      "common_safe_removals": [
+        "ASUS Game Center",
+        "Log Uploader and User Feedback",
+        "ASUS Support",
+        "Duplicated gallery, file manager and recorder"
+      ]
+    },
+    "google": {
+      "display_name": "Google Pixel",
+      "detection_prefixes": [
+        "com.google.android"
+      ],
+      "os_name": "Stock Android / Pixel Experience",
+      "known_models": [
+        "Pixel"
+      ],
+      "special_notes": "Pixel devices run stock Android with Google apps. Less bloat than most OEMs, but you can still remove unused Google apps. Be careful with Pixel-exclusive features (Now Playing, Recorder, etc.).",
+      "common_safe_removals": [
+        "Google One",
+        "Google Meet / Duo",
+        "YouTube Music",
+        "Google TV",
+        "Google News",
+        "Google Podcasts",
+        "Google Fit"
+      ],
+      "aliases": [
+        "google",
+        "pixel"
+      ]
+    },
+    "honor": {
+      "display_name": "Honor",
+      "aliases": [
+        "honor",
+        "hihonor"
+      ],
+      "detection_prefixes": [
+        "com.hihonor",
+        "com.huawei"
+      ],
+      "os_name": "MagicOS",
+      "known_models": [
+        "Magic",
+        "X",
+        "Play",
+        "Honor"
+      ],
+      "special_notes": "Honor split from Huawei in 2020, so older models carry com.huawei.* packages and newer ones com.hihonor.*. Expect both prefixes on the same phone during the transition years, and check which one is actually installed before planning anything.",
+      "common_safe_removals": [
+        "Honor App Market",
+        "Honor Support",
+        "Honor Reader",
+        "Theme store"
+      ]
+    },
+    "huawei": {
+      "display_name": "Huawei",
+      "aliases": [
+        "huawei"
+      ],
+      "detection_prefixes": [
+        "com.huawei",
+        "com.hicloud",
+        "com.hisilicon"
+      ],
+      "os_name": "EMUI / HarmonyOS",
+      "known_models": [
+        "P",
+        "Mate",
+        "Nova",
+        "Y"
+      ],
+      "special_notes": "Recent Huawei phones ship without Google Play Services, so AppGallery and Huawei ID are doing the work the Play Store does elsewhere. Removing com.huawei.hwid or com.huawei.appmarket on such a phone leaves it with no way to install or update anything. On older models that do have Play Services, both are safe to drop.",
+      "common_safe_removals": [
+        "Huawei Video, Music and Reader",
+        "Huawei Support and Detect & Repair",
+        "SkyTone roaming",
+        "Game Assistant",
+        "Huawei Browser"
+      ]
+    },
+    "motorola": {
+      "display_name": "Motorola / Lenovo",
+      "detection_prefixes": [
+        "com.motorola",
+        "com.lenovo"
+      ],
+      "os_name": "Near-Stock Android",
+      "known_models": [
+        "Moto G",
+        "Moto E",
+        "Edge",
+        "Razr"
+      ],
+      "special_notes": "Motorola runs near-stock Android with minimal bloat. Main targets are Moto-specific apps (Genie, Gametime, Feedback). Moto Actions/Gestures are useful features - only remove if you don't use them.",
+      "common_safe_removals": [
+        "Moto Help / Genie",
+        "Moto Gametime",
+        "Device Help",
+        "Moto Feedback",
+        "FM Radio"
+      ],
+      "aliases": [
+        "motorola",
+        "moto",
+        "lenovo"
+      ]
+    },
+    "nothing": {
+      "display_name": "Nothing",
+      "aliases": [
+        "nothing"
+      ],
+      "detection_prefixes": [
+        "com.nothing"
+      ],
+      "os_name": "Nothing OS",
+      "known_models": [
+        "Phone (1)",
+        "Phone (2)",
+        "Phone (2a)",
+        "Phone (3a)",
+        "CMF Phone"
+      ],
+      "special_notes": "Nothing OS is already close to stock Android and ships very little preinstalled software, so a debloat here is mostly about the Google apps you do not use rather than anything Nothing added. Expect a short plan.",
+      "common_safe_removals": [
+        "Nothing Smart Center",
+        "Unused Google apps"
+      ]
+    },
+    "oneplus": {
+      "display_name": "OnePlus",
+      "detection_prefixes": [
+        "com.oneplus",
+        "com.oplus",
+        "com.heytap",
+        "com.oppo"
+      ],
+      "os_name": "OxygenOS / ColorOS",
+      "known_models": [
+        "OnePlus Nord",
+        "OnePlus"
+      ],
+      "special_notes": "Modern OnePlus devices share codebase with Oppo (ColorOS). Look for both OnePlus and Oppo/HeyTap packages. The Shelf (left swipe panel) is a common removal target.",
+      "common_safe_removals": [
+        "OnePlus Shelf",
+        "HeyTap App Market",
+        "HeyTap Cloud",
+        "Game Space",
+        "Red Cable Club",
+        "OnePlus Store",
+        "Clone Phone"
+      ],
+      "aliases": [
+        "oneplus",
+        "1+"
+      ]
+    },
+    "oppo": {
+      "display_name": "Oppo",
+      "detection_prefixes": [
+        "com.oppo",
+        "com.coloros",
+        "com.heytap",
+        "com.nearme",
+        "com.oplus"
+      ],
+      "os_name": "ColorOS",
+      "known_models": [
+        "Oppo A",
+        "Oppo F",
+        "Oppo Reno",
+        "Oppo Find"
+      ],
+      "special_notes": "Oppo shares software with OnePlus and Realme (all under BBK Electronics). HeyTap is their shared cloud/app ecosystem. Finshell Pay is an Oppo-specific payment bloat.",
+      "common_safe_removals": [
+        "HeyTap App Market",
+        "HeyTap Cloud",
+        "HeyTap Browser",
+        "Game Center",
+        "Finshell Pay",
+        "Clone Phone",
+        "Hot Games"
+      ],
+      "aliases": [
+        "oppo"
+      ]
+    },
+    "realme": {
+      "display_name": "Realme",
+      "detection_prefixes": [
+        "com.realme",
+        "com.coloros",
+        "com.heytap",
+        "com.nearme",
+        "com.oplus"
+      ],
+      "os_name": "Realme UI (ColorOS-based)",
+      "known_models": [
+        "Realme",
+        "Realme Narzo",
+        "Realme GT",
+        "Realme C"
+      ],
+      "special_notes": "Realme is an Oppo sub-brand, so most Oppo/HeyTap packages apply. Often comes with extra carrier/partner bloat in India (Jio apps, Hotstar, etc.).",
+      "common_safe_removals": [
+        "HeyTap App Market",
+        "HeyTap Cloud",
+        "HeyTap Browser",
+        "Game Space",
+        "Finshell Pay",
+        "Clone Phone",
+        "Global Freedom / Roaming"
+      ],
+      "aliases": [
+        "realme"
+      ]
+    },
+    "samsung": {
+      "display_name": "Samsung",
+      "detection_prefixes": [
+        "com.samsung",
+        "com.sec.android",
+        "com.knox"
+      ],
+      "os_name": "One UI",
+      "known_models": [
+        "Galaxy S",
+        "Galaxy A",
+        "Galaxy M",
+        "Galaxy F",
+        "Galaxy Z",
+        "Galaxy Note"
+      ],
+      "special_notes": "Samsung devices have the most bloatware. Bixby, Galaxy Store, Samsung Daily, AR Zone, and Game Launcher are safe primary targets. Samsung Pay uses unique MST technology - only remove if you don't use it.",
+      "common_safe_removals": [
+        "Bixby (all components)",
+        "AR Zone / AR Emoji",
+        "Samsung Free / Daily",
+        "Galaxy Store",
+        "Samsung Members",
+        "Samsung Tips",
+        "Samsung Shop",
+        "Game Launcher"
+      ],
+      "aliases": [
+        "samsung",
+        "galaxy"
+      ]
+    },
+    "transsion": {
+      "display_name": "Tecno / Infinix / itel",
+      "aliases": [
+        "tecno",
+        "infinix",
+        "itel",
+        "transsion"
+      ],
+      "detection_prefixes": [
+        "com.transsion",
+        "com.talpa",
+        "net.bat",
+        "com.rlk",
+        "com.infinix"
+      ],
+      "os_name": "HiOS / XOS / itel OS",
+      "known_models": [
+        "Camon",
+        "Spark",
+        "Phantom",
+        "Note",
+        "Hot",
+        "Zero"
+      ],
+      "special_notes": "Transsion phones carry some of the most aggressive notification advertising of any Android brand, most of it from net.bat.store and the preinstalled browsers. Those three are the removals people notice within a day. Be careful with the launcher: HiOS and XOS use different launcher packages and there is often no other launcher installed.",
+      "common_safe_removals": [
+        "AHA Games / Bat Store (ad notifications)",
+        "Phoenix Browser and Hi Browser",
+        "Carlcare",
+        "XShare",
+        "Theme store"
+      ]
+    },
+    "vivo": {
+      "display_name": "Vivo / iQOO",
+      "detection_prefixes": [
+        "com.vivo",
+        "com.bbk",
+        "com.iqoo"
+      ],
+      "os_name": "Funtouch OS / Origin OS",
+      "known_models": [
+        "Vivo V",
+        "Vivo Y",
+        "Vivo X",
+        "Vivo T",
+        "iQOO"
+      ],
+      "special_notes": "Vivo has its own ecosystem of apps (V-Appstore, VivoCloud, EasyShare). The Vivo Daemon Service and Application Behavior Engine are background telemetry collectors.",
+      "common_safe_removals": [
+        "V-Appstore",
+        "Vivo Browser",
+        "VivoCloud",
+        "EasyShare",
+        "Vivoice",
+        "Game Cube",
+        "Kids Mode",
+        "Hot Apps"
+      ],
+      "aliases": [
+        "vivo",
+        "iqoo"
+      ]
+    },
+    "xiaomi": {
+      "display_name": "Xiaomi / Redmi / POCO",
+      "detection_prefixes": [
+        "com.miui",
+        "com.xiaomi",
+        "com.mi."
+      ],
+      "os_name": "MIUI / HyperOS",
+      "known_models": [
+        "Redmi Note",
+        "Redmi",
+        "POCO",
+        "Mi",
+        "Xiaomi"
+      ],
+      "special_notes": "Xiaomi devices are infamous for system-level ads (MSA). Removing com.miui.msa.global is the single most impactful debloat action. Also has aggressive telemetry via com.miui.analytics. MIUI Security Center removal can cause issues on some versions.",
+      "common_safe_removals": [
+        "MSA (System Ads)",
+        "MIUI Analytics",
+        "GetApps / Mi Picks",
+        "Mi Browser",
+        "Mi Video",
+        "Mi Music",
+        "Quick Apps",
+        "Cleaner"
+      ],
+      "aliases": [
+        "xiaomi",
+        "redmi",
+        "poco",
+        "mi"
+      ]
+    }
+  }
+}
