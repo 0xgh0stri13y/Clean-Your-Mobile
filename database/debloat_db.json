@@ -1,8 +1,12 @@
 {
   "_meta": {
+    "schema": "https://raw.githubusercontent.com/0xgh0stri13y/Clean-Your-Mobile/main/database/schema/debloat_db.schema.json",
+    "schema_version": "1.0.0",
     "version": "1.0.0",
     "last_updated": "2026-11-06",
+    "licence": "MIT",
     "total_packages": 518,
+    "distinct_packages": 505,
     "sources": [
       "Universal Android Debloater (UAD-ng)",
       "MuntashirAkon/android-debloat-list",
@@ -26,8 +30,7 @@
       "oem_feature",
       "google",
       "essential"
-    ],
-    "distinct_packages": 505
+    ]
   },
   "packages": [
     {

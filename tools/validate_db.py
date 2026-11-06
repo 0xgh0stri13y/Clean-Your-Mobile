@@ -135,6 +135,31 @@ def main() -> int:
             errors.append(f"{pid}: rated {' and '.join(sorted(ratings))} on different "
                           f"brands - the rating must agree")
 
+    # The published JSON Schema is the contract other tools consume. This check
+    # is deliberately a presence-and-shape check only: validating properly needs
+    # the `jsonschema` package, and AGENTS.md keeps these tools on the standard
+    # library. Consumers validate with a real validator; see docs/DATABASE.md.
+    SUPPORTED_SCHEMA_MAJOR = 1
+    schema_dir = DB_DIR / "schema"
+    for data_name, schema_name, blob in (
+        ("debloat_db.json", "debloat_db.schema.json", meta),
+        ("essential_packages.json", "essential_packages.schema.json", ess_raw.get("_meta", {})),
+    ):
+        declared = blob.get("schema_version")
+        if not declared:
+            errors.append(f"{data_name}: _meta.schema_version is missing")
+            continue
+        if not re.match(r"^\d+\.\d+\.\d+$", declared):
+            errors.append(f"{data_name}: _meta.schema_version '{declared}' is not semver")
+            continue
+        if int(declared.split(".")[0]) != SUPPORTED_SCHEMA_MAJOR:
+            errors.append(f"{data_name}: _meta.schema_version major is "
+                          f"{declared.split('.')[0]}, these tools speak "
+                          f"{SUPPORTED_SCHEMA_MAJOR}.x")
+        if not (schema_dir / schema_name).is_file():
+            errors.append(f"{data_name}: declares a schema but "
+                          f"database/schema/{schema_name} is missing")
+
     real_total = len(rows)
     if meta.get("total_packages") != real_total:
         warnings.append(f"_meta.total_packages says {meta.get('total_packages')}, "

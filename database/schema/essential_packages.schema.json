@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/0xgh0stri13y/Clean-Your-Mobile/main/database/schema/essential_packages.schema.json",
+  "title": "CleanYourMobile never-touch list",
+  "description": "Packages that must never be removed, whatever a plan says. Grouped by brand profile key, with 'universal' applying to every phone. Deliberately broader than the debloat database: it is the stop of last resort.",
+  "type": "object",
+  "required": [
+    "_meta",
+    "universal"
+  ],
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "version"
+      ],
+      "properties": {
+        "schema": {
+          "type": "string",
+          "format": "uri"
+        },
+        "schema_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "licence": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "categories_protected": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "total_entries": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "universal": {
+      "$ref": "#/$defs/packageList"
+    }
+  },
+  "patternProperties": {
+    "^(?!_meta$)[a-z][a-z0-9_]*$": {
+      "$ref": "#/$defs/packageList"
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "packageList": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^([a-zA-Z][a-zA-Z0-9_]*)(\\.[a-zA-Z0-9_]+)*$",
+        "description": "An Android package name. The bare framework package 'android' has no dot and is permitted."
+      }
+    }
+  }
+}

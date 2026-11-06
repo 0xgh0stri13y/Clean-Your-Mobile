@@ -11,9 +11,9 @@
 
 <p align="center">
   <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/stargazers"><img src="https://img.shields.io/github/stars/0xgh0stri13y/Clean-Your-Mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Stars"></a>
-  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/network/members"><img src="https://img.shields.io/github/forks/0xgh0stri13y/clean-your-mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Forks"></a>
-  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/graphs/contributors"><img src="https://img.shields.io/github/contributors/0xgh0stri13y/clean-your-mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Contributors"></a>
-  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/issues"><img src="https://img.shields.io/github/issues/0xgh0stri13y/clean-your-mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Issues"></a>
+  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/network/members"><img src="https://img.shields.io/github/forks/0xgh0stri13y/Clean-Your-Mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Forks"></a>
+  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/graphs/contributors"><img src="https://img.shields.io/github/contributors/0xgh0stri13y/Clean-Your-Mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Contributors"></a>
+  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/issues"><img src="https://img.shields.io/github/issues/0xgh0stri13y/Clean-Your-Mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Issues"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-cfffcf?style=flat&labelColor=15181e" alt="MIT licence"></a>
   <a href="#safety"><img src="https://img.shields.io/badge/root-not%20required-cfffcf?style=flat&labelColor=15181e" alt="No root required"></a>
 </p>
@@ -41,7 +41,7 @@ Inspired by [CleanYourTV](https://github.com/Gathin23/cleanyourtv), it brings th
 | **An Android phone and a computer** | [Quick start](#quick-start): a coding assistant does the work in about ten minutes. |
 | **A computer, no coding assistant** | [Doing it by hand](#doing-it-by-hand): the same job, the same scripts, run by you. |
 | **An iPhone** | Nothing here applies. iOS has no debug bridge of this kind and no preinstalled bloat to remove. |
-| **Only the phone, no computer** | Not supported. Removing a system app needs ADB from another device or root, so an app that claims to do this on the phone alone either needs root or does nothing. |
+| **Only the phone, no computer** | Not supported *by this project*, which runs on a computer. On Android 11 and newer, [Canta](https://github.com/samolego/Canta) does it on the phone alone through [Shizuku](https://shizuku.rikka.app/); see [how the two compare](#how-does-this-compare-to-canta-and-shizuku). |
 | **Want to see it first** | [What a scan looks like](#what-a-scan-looks-like): real output from a real phone. |
 
 [About](#about) · [How it works](#how-it-works) · [Quick start](#quick-start) ·
@@ -567,14 +567,57 @@ does not revert these, because they are not package changes, so put them back by
 <details>
 <summary><b>Is there an app that does this on the phone itself?</b></summary>
 
-Not from this project, and be sceptical of ones that claim to. Removing a system app needs either
-ADB from another device or root. An app running on the phone itself has neither, so it either
-requires root, or uses Shizuku and a second device, or it does nothing.
+Yes — just not this one, which is a set of scripts that run on a computer.
 
-[Canta](https://github.com/samolego/Canta), which uses Shizuku, and
-[Universal Android Debloater](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation),
-which runs on a desktop, are the well-regarded independent tools. They are separate projects, not
-affiliated with this one, and this database credits theirs as a source.
+Removing a system app needs shell-level privileges. An app on the phone gets them one of two ways:
+root, or [Shizuku](https://shizuku.rikka.app/), which on **Android 11 and newer** starts from the
+phone's own Wireless debugging with no computer and no second device involved. The catch is that
+Android clears it on every reboot, so you restart Shizuku each time you restart the phone unless
+you are rooted.
+
+[Canta](https://github.com/samolego/Canta) is the app to use for that, and it also has a web
+version that drives a phone over USB from a Chromium browser with nothing installed at all.
+[Universal Android Debloater](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation)
+is the desktop equivalent. Both are independent projects, not affiliated with this one, and this
+database credits their lists as a source.
+
+See [how the two compare](#how-does-this-compare-to-canta-and-shizuku) for which to pick.
+
+</details>
+
+<a id="how-does-this-compare-to-canta-and-shizuku"></a>
+
+<details>
+<summary><b>How does this compare to Canta and Shizuku?</b></summary>
+
+They solve the same problem from opposite ends, and for a lot of people Canta is the better
+answer. [Canta](https://github.com/samolego/Canta) is an Android app (LGPL-3.0, Android 9+) that
+uses Shizuku for shell privileges and runs on the phone. This is a scripted toolkit that drives
+ADB from a computer.
+
+| | Canta | CleanYourMobile |
+|---|---|---|
+| **Runs on** | The phone itself, via Shizuku. Also a web version over USB | A computer, over ADB |
+| **Needs a computer** | No, on Android 11+ | Yes |
+| **Interface** | A GUI you tap through | A CLI, or a coding assistant driving it |
+| **Setup** | Install the app, start Shizuku, restart it after each reboot | Enable USB debugging, clone the repo |
+| **Package data** | The Universal Debloat List | This repository's own database, with an `if_removed` line per package |
+| **Hard refusal of critical packages** | No. It surfaces recommendations and lets you decide — its own README warns that removing critical apps can bootloop the phone | Yes. 202 never-touch entries with no override, plus a name pattern and a live launcher/keyboard check |
+| **Batching and health checks** | No | Five at a time, package service verified between batches, stops after three consecutive failures |
+| **Before and after measurement** | No | RAM, storage, services, and permission-holder counts, with the noisy figures labelled as noisy |
+| **Post-update drift** | Detects apps you previously removed | `tools/check.py` diffs against the applied plan and `--fix` re-applies it |
+| **Maturity** | Thousands of users, on F-Droid and Play | Much newer and far less battle-tested |
+
+**Pick Canta if** you want this done in ten minutes with no computer, you are comfortable deciding
+for yourself what is safe, or you are doing one phone once.
+
+**Pick this if** you want to read what each removal costs before approving it, you want the
+guard to refuse rather than warn, or you want a measured before-and-after and a restore record you
+can replay.
+
+They are not really competitors. Canta is more accessible; this is more cautious and more
+instrumented. Using Canta on your own phone and this on a relative's would be a perfectly sensible
+combination.
 
 </details>
 

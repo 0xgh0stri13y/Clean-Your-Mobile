@@ -1,0 +1,143 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/0xgh0stri13y/Clean-Your-Mobile/main/database/schema/debloat_db.schema.json",
+  "title": "CleanYourMobile debloat database",
+  "description": "Android packages with a safety rating and, for each one, what the owner of the phone loses if it is removed. Published under MIT so other tools can consume it.",
+  "type": "object",
+  "required": [
+    "_meta",
+    "packages"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "_meta": {
+      "type": "object",
+      "required": [
+        "schema_version",
+        "version",
+        "safety_levels",
+        "categories"
+      ],
+      "properties": {
+        "schema": {
+          "type": "string",
+          "format": "uri"
+        },
+        "schema_version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Semantic version of THIS schema. A major bump means a consumer must be updated."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "description": "Version of the data, bumped as packages are added or reclassified."
+        },
+        "last_updated": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "licence": {
+          "type": "string"
+        },
+        "total_packages": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Row count. Higher than distinct_packages because a shared package is listed once per brand."
+        },
+        "distinct_packages": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Unique package ids. This is the number to quote."
+        },
+        "sources": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "safety_levels": {
+          "type": "object",
+          "description": "Human-readable meaning of each rating.",
+          "required": [
+            "Recommended",
+            "Advanced",
+            "Expert",
+            "Unsafe"
+          ],
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "categories": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Every value packages[].category may take."
+        }
+      }
+    },
+    "packages": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/package"
+      }
+    }
+  },
+  "$defs": {
+    "package": {
+      "type": "object",
+      "required": [
+        "id",
+        "brand",
+        "category",
+        "safety",
+        "name",
+        "description",
+        "if_removed"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-zA-Z][a-zA-Z0-9_]*(\\.[a-zA-Z0-9_]+)+$",
+          "description": "The exact Android package name."
+        },
+        "brand": {
+          "type": "string",
+          "description": "A key from brand_profiles.json, or 'universal' for cross-brand, or 'carrier'. Affects display grouping only - consumers match on id."
+        },
+        "category": {
+          "type": "string",
+          "description": "One of _meta.categories."
+        },
+        "safety": {
+          "enum": [
+            "Recommended",
+            "Advanced",
+            "Expert",
+            "Unsafe"
+          ],
+          "description": "Recommended: no side effects for anyone. Advanced: safe for most, a minor OEM feature goes. Expert: an ecosystem feature goes, or data must be moved first. Unsafe: must never be removed."
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What a person would call it."
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What it does, one plain sentence."
+        },
+        "if_removed": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What the owner of the phone loses, concretely. The field this database exists for."
+        }
+      }
+    }
+  }
+}

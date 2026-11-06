@@ -1,7 +1,10 @@
 {
   "_meta": {
-    "description": "Packages that must never be removed, whatever a plan says. Every tool in this repository checks a package against this list before touching it, and a package here is refused with no override. The list is deliberately broader than the debloat database: it is the stop of last resort, so a false positive here costs a feature while a false negative costs a phone.",
+    "schema": "https://raw.githubusercontent.com/0xgh0stri13y/Clean-Your-Mobile/main/database/schema/essential_packages.schema.json",
+    "schema_version": "1.0.0",
     "version": "2.0.0",
+    "licence": "MIT",
+    "description": "Packages that must never be removed, whatever a plan says. Every tool in this repository checks a package against this list before touching it, and a package here is refused with no override. The list is deliberately broader than the debloat database: it is the stop of last resort, so a false positive here costs a feature while a false negative costs a phone.",
     "categories_protected": [
       "phone calls",
       "SMS and MMS",

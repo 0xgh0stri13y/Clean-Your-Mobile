@@ -207,6 +207,80 @@ the thing someone would otherwise learn the hard way:
 
 Full process in [CONTRIBUTING.md](../CONTRIBUTING.md).
 
+## Consuming this database from another tool
+
+The database is MIT-licensed and versioned so that other projects can build on it — a phone app, a
+Shizuku front end, a different desktop tool. You do not need to ask, and attribution is welcome
+rather than required.
+
+Two JSON Schema files describe the contract:
+
+| File | Describes |
+|---|---|
+| [`database/schema/debloat_db.schema.json`](../database/schema/debloat_db.schema.json) | `debloat_db.json` |
+| [`database/schema/essential_packages.schema.json`](../database/schema/essential_packages.schema.json) | `essential_packages.json` |
+
+Both are JSON Schema draft 2020-12. Validate with any standard validator:
+
+```bash
+pip install check-jsonschema
+check-jsonschema --schemafile database/schema/debloat_db.schema.json database/debloat_db.json
+check-jsonschema --schemafile database/schema/essential_packages.schema.json database/essential_packages.json
+```
+
+The repository's own `tools/validate_db.py` does **not** use these schemas, because AGENTS.md keeps
+the Python tools on the standard library with nothing to `pip install`. It hand-rolls equivalent
+checks plus the semantic ones a schema cannot express, such as "nothing on the never-touch list may
+be rated below Unsafe". It does verify that `_meta.schema_version` is present, is semver, and has a
+major version these tools understand.
+
+### Versioning
+
+`_meta.schema_version` follows semver and describes the **shape** of the file, not the data in it:
+
+| Change | Bump |
+|---|---|
+| A package added, removed, or re-rated | `version`, not `schema_version` |
+| A new optional field | minor |
+| A new required field, a field removed or renamed, a field's type or allowed values narrowed | **major** |
+
+Pin the major version. If you read a file whose `schema_version` major is higher than you were
+built against, stop and tell the user rather than guessing — a major bump means something you rely
+on has changed.
+
+### If you are building a front end
+
+Three things in this data are easy to get wrong, and getting them wrong is how someone's phone
+breaks:
+
+1. **`essential_packages.json` is not advisory.** It is the stop of last resort, and it is
+   deliberately broader than the debloat database. Refuse these outright rather than warning about
+   them. Do not offer an override.
+2. **`total_packages` is a row count, not a package count.** A package shared across OPPO, OnePlus
+   and realme appears once per brand. Quote `distinct_packages`. Match on `id`, never on `brand`.
+3. **If two rows share an `id`, take the most cautious `safety`.** The repository's validator
+   rejects rows that disagree, but a consumer should not assume a file it did not validate is
+   clean.
+
+And one thing that is not in the data: the **live device state**. The launcher and keyboard the
+phone is using right now must come out of any plan whatever their rating says, and no list can tell
+you which those are. Read them from the device:
+
+```
+cmd package resolve-activity --brief -a android.intent.action.MAIN -c android.intent.category.HOME
+settings get secure default_input_method
+```
+
+The three protections this repository applies are described in
+[the guard section of the README](../README.md#safety). A front end that implements only the first
+is materially less safe than one that implements all three.
+
+### The field that matters
+
+`if_removed` is the reason this database exists. Any list can tell someone a package is "safe to
+remove"; this one tells them what they lose. If your interface has room for one line per package,
+show that one.
+
 ## Sources
 
 The ratings here draw on, and credit, the long-running community lists:
