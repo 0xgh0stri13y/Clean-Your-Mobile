@@ -3,7 +3,14 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/stargazers"><img src="https://img.shields.io/github/stars/0xgh0stri13y/clean-your-mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Stars"></a>
+  <b>Your phone, minus the bloat.</b><br>
+  Strip the ads, trackers, telemetry and preinstalled junk from any Android phone over USB or Wi-Fi,
+  with an AI coding assistant doing the work.<br>
+  <b>No root. Nothing permanently deleted. One-line restore.</b>
+</p>
+
+<p align="center">
+  <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/stargazers"><img src="https://img.shields.io/github/stars/0xgh0stri13y/Clean-Your-Mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Stars"></a>
   <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/network/members"><img src="https://img.shields.io/github/forks/0xgh0stri13y/clean-your-mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Forks"></a>
   <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/graphs/contributors"><img src="https://img.shields.io/github/contributors/0xgh0stri13y/clean-your-mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Contributors"></a>
   <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/issues"><img src="https://img.shields.io/github/issues/0xgh0stri13y/clean-your-mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Issues"></a>
@@ -16,6 +23,17 @@
   <b>202</b> never-touch entries · <b>no</b> external dependencies
 </p>
 
+## About
+
+**CleanYourMobile** is an autonomous, safety-first debloating framework for Android smartphones. It strips carrier bloat, lock screen ad carousels (Glance, magazine feeds), vendor ad daemons (MIUI MSA), background telemetry, and redundant OEM clones over local Wi-Fi or USB.
+
+Inspired by [CleanYourTV](https://github.com/Gathin23/cleanyourtv), it brings the same transparent, reversible approach to phones:
+- **No root required** — Uses standard Android Debug Bridge (`adb`) user-space commands (`pm uninstall -k --user 0`).
+- **Zero brick risk** — The read-only system partition stays untouched. Nothing is permanently deleted.
+- **Audited offline database** — 505 packages mapped across 15 brand families, each detailing what it does and what breaks if removed.
+- **3-layer safety guard** — 202 essential packages (phone calls, SMS, emergency alerts, biometrics, camera, Play Services) are permanently locked from removal.
+- **Instant rollback** — An automatic restore script is generated before the first app is touched.
+
 ## Start here
 
 | You have | Go to |
@@ -26,7 +44,7 @@
 | **Only the phone, no computer** | Not supported. Removing a system app needs ADB from another device or root, so an app that claims to do this on the phone alone either needs root or does nothing. |
 | **Want to see it first** | [What a scan looks like](#what-a-scan-looks-like): real output from a real phone. |
 
-[How it works](#how-it-works) · [Quick start](#quick-start) ·
+[About](#about) · [How it works](#how-it-works) · [Quick start](#quick-start) ·
 [What a scan looks like](#what-a-scan-looks-like) · [What you get](#what-you-get) ·
 [Supported phones](#supported-phones) · [Doing it by hand](#doing-it-by-hand) ·
 [Safety](#safety) · [Restoring](#restoring-your-phone) ·
