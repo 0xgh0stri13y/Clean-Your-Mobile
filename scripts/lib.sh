@@ -56,6 +56,14 @@ adb_path() {
     if command -v "$ADB_BINARY" >/dev/null 2>&1; then
         command -v "$ADB_BINARY"; return 0
     fi
+    # An ADB_BINARY the caller set explicitly must not fall through to a
+    # different adb found elsewhere: silently using the wrong binary is worse
+    # than failing. Only the default "adb" falls back to the known locations.
+    if [ -n "${ADB_BINARY:-}" ] && [ "$ADB_BINARY" != "adb" ]; then
+        err "ADB_BINARY is set to '$ADB_BINARY', which is not executable."
+        info "   Unset it to search the usual locations instead." >&2
+        return 1
+    fi
     local candidate
     for candidate in \
         "$HOME/platform-tools/adb" \

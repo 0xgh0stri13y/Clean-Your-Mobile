@@ -126,13 +126,29 @@ def main() -> int:
     pkgs_before = set(cym.read_lines(session / "packages_before.txt"))
     pkgs_after = set(cym.read_lines(session / "packages_after.txt"))
     recorded = cym.read_lines(session / "removed_packages.txt")
-    failed_rows = cym.read_lines(session / "failed_packages.txt")
+    # failed_packages.txt is appended to, so re-running a plan leaves one row
+    # per attempt. Keep the last attempt per package: that is the current state,
+    # and an older row may predate a fix to the error reporting itself.
+    _latest: dict = {}
+    for _row in cym.read_lines(session / "failed_packages.txt"):
+        _latest[_row.split("\t", 1)[0]] = _row
+    failed_rows = list(_latest.values())
+
+    # `pm list packages` lists disabled packages too, so a session run with
+    # --disable leaves every one of its packages in packages_after.txt. Without
+    # the disabled list below, all of them were reported as "came back on their
+    # own - a system update usually did this", which is a false alarm telling
+    # someone their work was undone when it was not.
+    disabled_before = set(cym.read_lines(session / "packages_before_disabled.txt"))
+    disabled_after = set(cym.read_lines(session / "packages_after_disabled.txt"))
 
     gone = sorted(pkgs_before - pkgs_after)
     appeared = sorted(pkgs_after - pkgs_before)
-    # A package the log says was removed but that is still there: an OTA or the
-    # ROM put it back. Worth knowing, and easy to miss.
-    came_back = sorted(set(recorded) & pkgs_after)
+    # Packages this session switched off rather than uninstalled.
+    disabled_now = sorted((set(recorded) & disabled_after) - disabled_before)
+    # Still present AND enabled: those genuinely came back. An OTA or the ROM
+    # put them there, and that is worth knowing.
+    came_back = sorted((set(recorded) & pkgs_after) - disabled_after)
 
     db = Database.load()
 
@@ -161,6 +177,8 @@ def main() -> int:
         "packages": {
             "removed_count": len(gone),
             "removed": gone,
+            "disabled_count": len(disabled_now),
+            "disabled": disabled_now,
             "recorded_in_log": len(recorded),
             "reappeared": came_back,
             "new_since_before": appeared,
@@ -173,14 +191,15 @@ def main() -> int:
     if args.as_json:
         print(json.dumps(payload, indent=2))
         _write_files(session, payload, table, db, gone, came_back, appeared,
-                     failed_rows, device, before, after)
+                     failed_rows, device, before, after, disabled_now)
         return 0
 
-    md = _markdown(payload, table, db, gone, came_back, appeared, failed_rows)
+    md = _markdown(payload, table, db, gone, came_back, appeared, failed_rows,
+                   disabled_now)
     if args.markdown:
         print(md)
         _write_files(session, payload, table, db, gone, came_back, appeared,
-                     failed_rows, device, before, after)
+                     failed_rows, device, before, after, disabled_now)
         return 0
 
     # -------------------------------------------------------- terminal view --
@@ -210,8 +229,24 @@ def main() -> int:
             print(f"  {C.GREEN}-{C.RESET} {pid:<46} {C.DIM}{name}{C.RESET}")
         if len(gone) > 40:
             print(f"  {C.DIM}... and {len(gone) - 40} more, all listed in report.md{C.RESET}")
+    elif disabled_now:
+        print(f"  {C.DIM}None - this session used --disable, so nothing was "
+              f"uninstalled.{C.RESET}")
     else:
         print(f"  {C.DIM}The two package lists are identical.{C.RESET}")
+
+    if disabled_now:
+        print()
+        step(f"Packages disabled: {len(disabled_now)}")
+        print(f"  {C.DIM}Still installed but switched off, and they stay off "
+              f"across reboots.{C.RESET}")
+        for pid in disabled_now[:40]:
+            entry = db.get(pid)
+            name = entry.name if entry else "not in the database"
+            print(f"  {C.GREEN}o{C.RESET} {pid:<46} {C.DIM}{name}{C.RESET}")
+        if len(disabled_now) > 40:
+            print(f"  {C.DIM}... and {len(disabled_now) - 40} more, all listed "
+                  f"in report.md{C.RESET}")
 
     if came_back:
         print()
@@ -246,11 +281,11 @@ def main() -> int:
 
     print()
     step("Honest reading of these numbers")
-    for line in _honest_notes(table, gone, came_back):
+    for line in _honest_notes(table, gone, came_back, disabled_now):
         print(f"  {line}")
 
     paths = _write_files(session, payload, table, db, gone, came_back, appeared,
-                         failed_rows, device, before, after)
+                         failed_rows, device, before, after, disabled_now)
     print()
     hr()
     ok("Report written")
@@ -260,12 +295,19 @@ def main() -> int:
     return 0
 
 
-def _honest_notes(table, gone, came_back) -> List[str]:
+def _honest_notes(table, gone, came_back, disabled_now=()) -> List[str]:
     notes = []
     by_key = {r["key"]: r for r in table}
 
     pkg = by_key.get("packages.total", {})
-    if pkg.get("before") and pkg.get("after") is not None:
+    if disabled_now:
+        # Everything below needs this caveat first, or the rows of "no change"
+        # read as a failure when they are the expected result of --disable.
+        notes.append(f"{len(disabled_now)} package(s) were disabled, not uninstalled, so the")
+        notes.append("installed count and the permission counts are unchanged by design:")
+        notes.append("a disabled app is still installed and still holds its grants, it")
+        notes.append("just cannot run. The figure that moved is 'Disabled packages'.")
+    elif pkg.get("before") and pkg.get("after") is not None:
         removed = pkg["before"] - pkg["after"]
         notes.append(f"{removed} fewer packages is the one number that is exactly true.")
 
@@ -284,13 +326,20 @@ def _honest_notes(table, gone, came_back) -> List[str]:
     notes.append("Battery life cannot be measured in minutes. Fewer background")
     notes.append("services means less wakeup work, but judge it over a few days.")
 
+    proc = by_key.get("runtime.processes", {})
+    if proc.get("verdict") == "better":
+        notes.append("The process and service drop is real but flattered by the reboot:")
+        notes.append("the after snapshot was taken on a freshly booted phone that has")
+        notes.append("not opened anything yet. Re-measure after a day of normal use.")
+
     if came_back:
         notes.append(f"{len(came_back)} package(s) returned. Run tools/check.py after")
         notes.append("every system update and re-apply the plan.")
     return notes
 
 
-def _markdown(payload, table, db, gone, came_back, appeared, failed_rows) -> str:
+def _markdown(payload, table, db, gone, came_back, appeared, failed_rows,
+              disabled_now=()) -> str:
     d = payload["device"]
     out = []
     out.append(f"# Clean Your Mobile - {d.get('brand', '?')} {d.get('model', '?')}")
@@ -317,8 +366,24 @@ def _markdown(payload, table, db, gone, came_back, appeared, failed_rows) -> str
             entry = db.get(pid)
             name = entry.name if entry else "not in the database"
             out.append(f"| `{pid}` | {name} | `adb shell cmd package install-existing {pid}` |")
+    elif disabled_now:
+        out.append("Nothing was uninstalled: this session used `--disable`.")
     else:
         out.append("Nothing was removed in this session.")
+
+    if disabled_now:
+        out.append("")
+        out.append(f"## Packages disabled ({len(disabled_now)})")
+        out.append("")
+        out.append("Still installed but switched off, and they stay off across reboots.")
+        out.append("")
+        out.append("| Package | What it was | If you want it back |")
+        out.append("|---|---|---|")
+        for pid in disabled_now:
+            entry = db.get(pid)
+            name = entry.name if entry else "not in the database"
+            out.append(f"| `{pid}` | {name} | `adb shell pm enable --user 0 {pid}` |")
+
     if came_back:
         out.append("")
         out.append(f"## Came back on their own ({len(came_back)})")
@@ -344,7 +409,7 @@ def _markdown(payload, table, db, gone, came_back, appeared, failed_rows) -> str
     out.append("")
     out.append("## Reading these numbers honestly")
     out.append("")
-    for line in _honest_notes(table, gone, came_back):
+    for line in _honest_notes(table, gone, came_back, disabled_now):
         out.append(f"{line}")
     out.append("")
     out.append("## Putting it back")
@@ -358,12 +423,13 @@ def _markdown(payload, table, db, gone, came_back, appeared, failed_rows) -> str
 
 
 def _write_files(session: Path, payload, table, db, gone, came_back, appeared,
-                 failed_rows, device, before, after) -> List[Path]:
+                 failed_rows, device, before, after, disabled_now=()) -> List[Path]:
     written = []
 
     md_path = session / "report.md"
     md_path.write_text(_markdown(payload, table, db, gone, came_back, appeared,
-                                 failed_rows), encoding="utf-8", newline="\n")
+                                 failed_rows, disabled_now),
+                       encoding="utf-8", newline="\n")
     written.append(md_path)
 
     json_path = session / "report.json"

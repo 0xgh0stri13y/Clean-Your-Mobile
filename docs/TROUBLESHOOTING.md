@@ -97,6 +97,32 @@ The ROM is refusing. Three usual reasons:
 bash scripts/debloat.sh plan.txt --disable
 ```
 
+### `SecurityException: Cannot disable <package> no root permission`
+
+**vivo and iQOO (Funtouch OS / OriginOS).** Funtouch ships a vendor-patched `PackageManagerService`
+that refuses to disable or uninstall certain vivo packages at all, from any non-root shell. The
+refusal comes from `setEnabledSettingInternalLocked`, which is vivo's own modification, not stock
+Android. Confirmed on a vivo V2250, Android 15, Funtouch `PD2283CF_EX_A_15.2.21.0.W20`.
+
+This is the usual reason behind "it doesn't work on vivo". It is not a connection problem and not a
+bug in these scripts: the ROM is saying no, and the only way past it is root, which this project
+does not use.
+
+Packages seen to be blocked this way:
+
+| Package | What it is |
+|---|---|
+| `com.vivo.abe` | Application Behaviour Engine |
+| `com.vivo.daemonService` | vivo daemon / telemetry service |
+| `com.vivo.upslide` | Hot Apps promotional panel |
+
+Everything else in a conservative vivo plan applies normally — 29 of 32 succeeded on the test
+device. Prefer `--disable` on vivo: vivo-specific community guidance recommends it over uninstall,
+and some Funtouch builds accept `disable-user` where they refuse `uninstall`.
+
+If you want those three genuinely gone you need either root or a Shizuku-based app with the same
+privileges, and neither gets past a vendor block that checks for root specifically.
+
 ### `Security exception: Permission Denial`
 
 Samsung and a few others block `pm uninstall` for certain packages on recent One UI builds.

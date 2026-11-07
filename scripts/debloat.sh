@@ -126,7 +126,10 @@ REMOVED_FILE="$SESSION/removed_packages.txt"
 FAILED_FILE="$SESSION/failed_packages.txt"
 RESTORE="$SESSION/restore.sh"
 RESTORE_PS="$SESSION/restore.ps1"
-touch "$REMOVED_FILE" "$FAILED_FILE"
+# Only on a real run: a dry run must leave the session exactly as it found it.
+# An empty removed_packages.txt is not harmless - it used to shadow plan.txt
+# and make tools/check.py report the session as unusable.
+[ "$DRY_RUN" = 0 ] && touch "$REMOVED_FILE" "$FAILED_FILE"
 
 log() { printf '%s %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$*" >> "$LOG"; }
 
@@ -214,16 +217,44 @@ if [ "$DRY_RUN" = 0 ] && [ "$ASSUME_YES" = 0 ]; then
 fi
 
 # ----------------------------------------------------------- the removal -----
+# Why `2>&1` inside the device shell: pm writes its refusals to stderr, and the
+# adb wrapper discards stderr to keep adb's own noise out of the output. The
+# redirect happens on the phone, so the real reason travels back on stdout.
+# Without it, every vendor refusal was reported as "no reply" - which is how a
+# Funtouch ROM blocking a package looked identical to a dropped connection.
+explain_failure() { # turn a pm error into something a person can act on
+    local reply="$1"
+    case "$reply" in
+        *"SecurityException"*"no root permission"*)
+            printf 'blocked by the vendor ROM (would need root, which this project will not use)' ;;
+        *"DELETE_FAILED_INTERNAL_ERROR"*)
+            printf 'ROM refused the uninstall - try --disable, or check Settings > Security > Device admin apps' ;;
+        *"DELETE_FAILED_DEVICE_POLICY_MANAGER"*)
+            printf 'a device policy or work profile owns this package' ;;
+        *"not installed for"*)
+            printf 'not installed for this user - nothing to do' ;;
+        *"Unknown package"*)
+            printf 'the phone does not know this package name' ;;
+        "")
+            printf 'no reply from the phone - the connection may have dropped' ;;
+        *)  # First meaningful line only; a Java stack trace is 15 lines of noise.
+            printf '%s' "$(printf '%s' "$reply" | sed 's/[[:space:]]*at [a-zA-Z0-9_.$]*(.*//' \
+                   | cut -c1-120)" ;;
+    esac
+}
+
 remove_one() { # remove_one <pkg> -> prints the device's reply, returns 0 on success
     local pkg="$1" reply
     if [ "$METHOD" = "disable" ]; then
-        reply="$(sh_ "pm disable-user --user 0 $pkg" | tr -d '\r\n')"
+        reply="$(sh_ "pm disable-user --user 0 $pkg 2>&1" | tr -d '\r' | tr '\n' ' ')"
         [[ "$reply" == *"new state: disabled-user"* ]] && { printf '%s' "$reply"; return 0; }
     else
-        reply="$(sh_ "pm uninstall -k --user 0 $pkg" | tr -d '\r\n')"
+        reply="$(sh_ "pm uninstall -k --user 0 $pkg 2>&1" | tr -d '\r' | tr '\n' ' ')"
         [[ "$reply" == *"Success"* ]] && { printf '%s' "$reply"; return 0; }
     fi
-    printf '%s' "${reply:-no reply}"
+    # Full reply goes to the log; the caller prints the short explanation.
+    CYM_LAST_RAW_REPLY="$reply"
+    explain_failure "$reply"
     return 1
 }
 
@@ -277,7 +308,9 @@ for (( i=0; i<TOTAL; i++ )); do
     else
         printf '%sfailed%s %s\n' "$C_RED" "$C_RESET" "$reply"
         printf '%s\t%s\n' "$pkg" "$reply" >> "$FAILED_FILE"
-        log "FAILED $pkg reply=$reply"
+        # The short explanation goes on screen and in failed_packages.txt; the
+        # phone's full reply, stack trace and all, goes in the log.
+        log "FAILED $pkg explanation=$reply raw=${CYM_LAST_RAW_REPLY:-}"
         FAILED=$(( FAILED + 1 ))
         CONSECUTIVE=$(( CONSECUTIVE + 1 ))
         if [ "$CONSECUTIVE" -ge "$MAX_CONSECUTIVE_FAILURES" ]; then

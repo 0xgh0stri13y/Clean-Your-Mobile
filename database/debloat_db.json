@@ -451,10 +451,10 @@
       "id": "com.google.android.apps.nbu.paisa.user",
       "brand": "google",
       "category": "bloatware",
-      "safety": "Recommended",
+      "safety": "Advanced",
       "name": "Google Pay India",
       "description": "Payments app for the Indian market",
-      "if_removed": "The app disappears. Remove only if you do not use it."
+      "if_removed": "Your payments app goes with it. Saved cards and UPI IDs live in your Google account, so reinstalling from the Play Store restores them, but check before removing it."
     },
     {
       "id": "com.google.android.apps.photos",
@@ -2674,10 +2674,10 @@
       "id": "com.samsung.android.dkey",
       "brand": "samsung",
       "category": "bloatware",
-      "safety": "Recommended",
+      "safety": "Advanced",
       "name": "Samsung Digital Key",
       "description": "Digital car key feature (limited car support)",
-      "if_removed": "Digital Key removed. No impact unless you use it with a supported car."
+      "if_removed": "Digital Key stops working, so a car or door you unlock with the phone no longer opens. No impact if you never set one up."
     },
     {
       "id": "com.samsung.android.drivelink.stub",
@@ -2836,10 +2836,10 @@
       "id": "com.samsung.android.oneconnect",
       "brand": "samsung",
       "category": "bloatware",
-      "safety": "Recommended",
+      "safety": "Advanced",
       "name": "SmartThings",
       "description": "Samsung smart home device control",
-      "if_removed": "Cannot control Samsung smart home devices. No system impact if you don't use SmartThings."
+      "if_removed": "SmartThings stops: you can no longer control Samsung smart home devices, TVs or appliances from the phone. No impact if you do not use it."
     },
     {
       "id": "com.samsung.android.privateshare",

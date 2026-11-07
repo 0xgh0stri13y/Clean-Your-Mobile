@@ -76,11 +76,17 @@ def main() -> int:
             if not quiet:
                 cym.fail(f"No session under {cym.BACKUP_ROOT}, and no --plan given.")
             return 2
+        # Prefer what was actually removed, then fall back to the plan. An
+        # existing-but-empty file does not count: a dry run used to leave a
+        # zero-byte removed_packages.txt behind, which otherwise shadowed a
+        # perfectly good plan.txt and reported the session as unusable.
         for candidate in ("removed_packages.txt", "plan.txt"):
             path = session / candidate
-            if path.is_file():
-                expected = read_plan(path) if candidate == "plan.txt" else cym.read_lines(path)
-                source = str(path)
+            if not path.is_file():
+                continue
+            found = read_plan(path) if candidate == "plan.txt" else cym.read_lines(path)
+            if found:
+                expected, source = found, str(path)
                 break
         if not expected:
             if not quiet:

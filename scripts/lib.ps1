@@ -36,6 +36,10 @@ function Find-Adb {
         $cmd = Get-Command $env:ADB_BINARY -ErrorAction SilentlyContinue
         if ($cmd) { return $cmd.Source }
         if (Test-Path $env:ADB_BINARY) { return $env:ADB_BINARY }
+        # An ADB_BINARY the caller set explicitly must not fall through to a
+        # different adb found elsewhere: silently using the wrong binary is
+        # worse than failing.
+        Stop-Cym "ADB_BINARY is set to '$($env:ADB_BINARY)', which is not executable. Unset it to search the usual locations instead."
     }
     $cmd = Get-Command adb -ErrorAction SilentlyContinue
     if ($cmd) { return $cmd.Source }

@@ -106,8 +106,13 @@ $removedFile = Join-Path $sessionDir "removed_packages.txt"
 $failedFile  = Join-Path $sessionDir "failed_packages.txt"
 $restoreSh   = Join-Path $sessionDir "restore.sh"
 $restorePs   = Join-Path $sessionDir "restore.ps1"
-foreach ($f in @($removedFile, $failedFile)) {
+# Only on a real run: a dry run must leave the session exactly as it found it.
+# An empty removed_packages.txt is not harmless - it used to shadow plan.txt and
+# make tools/check.py report the session as unusable.
+if (-not $DryRun) {
+  foreach ($f in @($removedFile, $failedFile)) {
     if (-not (Test-Path $f)) { New-Item -ItemType File -Path $f | Out-Null }
+  }
 }
 
 function Write-Log([string]$Message) {
@@ -180,13 +185,44 @@ if (-not $DryRun -and -not $Yes) {
 }
 
 # ----------------------------------------------------------- the removal -----
+# Turn a pm error into something a person can act on. Kept in step with
+# explain_failure() in scripts/debloat.sh.
+function Get-FailureExplanation([string]$Reply) {
+    if ($Reply -match "SecurityException" -and $Reply -match "no root permission") {
+        return "blocked by the vendor ROM (would need root, which this project will not use)"
+    }
+    if ($Reply -match "DELETE_FAILED_INTERNAL_ERROR") {
+        return "ROM refused the uninstall - try -Disable, or check Settings > Security > Device admin apps"
+    }
+    if ($Reply -match "DELETE_FAILED_DEVICE_POLICY_MANAGER") {
+        return "a device policy or work profile owns this package"
+    }
+    if ($Reply -match "not installed for")  { return "not installed for this user - nothing to do" }
+    if ($Reply -match "Unknown package")    { return "the phone does not know this package name" }
+    if (-not $Reply)                        { return "no reply from the phone - the connection may have dropped" }
+    # First meaningful line only; a Java stack trace is 15 lines of noise.
+    $short = ($Reply -replace '\s*at [a-zA-Z0-9_.$]+\(.*', '')
+    if ($short.Length -gt 120) { $short = $short.Substring(0, 120) }
+    return $short
+}
+
+# Why '2>&1' inside the device shell: pm writes its refusals to stderr, and the
+# adb wrapper discards stderr to keep adb's own noise out. The redirect happens
+# on the phone, so the real reason travels back on stdout. Without it, a vendor
+# refusal looked identical to a dropped connection.
 function Remove-OnePackage([string]$Pkg) {
     if ($method -eq "disable") {
-        $reply = (Invoke-Shell "pm disable-user --user 0 $Pkg").Trim()
-        return [pscustomobject]@{ Ok = ($reply -match "new state: disabled-user"); Reply = $reply }
+        $reply = (Invoke-Shell "pm disable-user --user 0 $Pkg 2>&1").Trim()
+        if ($reply -match "new state: disabled-user") {
+            return [pscustomobject]@{ Ok = $true; Reply = $reply; Raw = $reply }
+        }
+        return [pscustomobject]@{ Ok = $false; Reply = (Get-FailureExplanation $reply); Raw = $reply }
     }
-    $reply = (Invoke-Shell "pm uninstall -k --user 0 $Pkg").Trim()
-    return [pscustomobject]@{ Ok = ($reply -match "Success"); Reply = $reply }
+    $reply = (Invoke-Shell "pm uninstall -k --user 0 $Pkg 2>&1").Trim()
+    if ($reply -match "Success") {
+        return [pscustomobject]@{ Ok = $true; Reply = $reply; Raw = $reply }
+    }
+    return [pscustomobject]@{ Ok = $false; Reply = (Get-FailureExplanation $reply); Raw = $reply }
 }
 
 function Test-PackageGone([string]$Pkg) {
@@ -233,7 +269,9 @@ for ($i = 0; $i -lt $total; $i++) {
         Write-Host "failed " -ForegroundColor Red -NoNewline
         Write-Host $result.Reply
         Add-Content $failedFile ("{0}`t{1}" -f $pkg, $result.Reply) -Encoding utf8
-        Write-Log "FAILED $pkg reply=$($result.Reply)"
+        # Short explanation on screen and in failed_packages.txt; the phone's
+        # full reply, stack trace and all, goes in the log.
+        Write-Log "FAILED $pkg explanation=$($result.Reply) raw=$($result.Raw)"
         $failed++
         $consecutive++
         if ($consecutive -ge 3) {

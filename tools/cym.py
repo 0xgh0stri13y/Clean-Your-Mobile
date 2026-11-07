@@ -145,6 +145,11 @@ def find_adb() -> Optional[str]:
             return found
         if Path(named).is_file():
             return named
+        # An ADB_BINARY the caller set explicitly must not fall through to a
+        # different adb found elsewhere: silently using the wrong binary is
+        # worse than failing.
+        die(f"ADB_BINARY is set to {named!r}, which is not executable.\n"
+            f"        Unset it to search the usual locations instead.")
     found = shutil.which("adb")
     if found:
         return found
