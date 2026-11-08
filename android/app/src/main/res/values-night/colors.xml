@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  DARK palette - true OLED black.
+
+  The background is #000000 exactly, not #121212. On an OLED panel a black
+  pixel is an unlit pixel, so true black costs no power and gives an edge with
+  no visible seam between the screen and the bezel. That is the look, and it
+  only works if nothing anywhere paints a near-black instead.
+
+  Depth therefore comes from hairline borders, not from lighter fills:
+  #0A0A0A for a raised card, #141414 at most, and a #262626 rule to separate
+  things. Large pale fills are what make a dark theme look cheap and they
+  throw away the OLED advantage.
+
+  Body text is pure white at 21:1 - the maximum possible - and the gold accent
+  reaches 9.99:1, so the one coloured thing on screen is also the most legible.
+-->
+<resources>
+
+    <!-- #000000 exactly. Pixels off. -->
+    <color name="cym_background">#000000</color>
+    <color name="cym_surface">#0A0A0A</color>
+    <color name="cym_surface_high">#141414</color>
+    <color name="cym_foreground">#FFFFFF</color>
+    <color name="cym_muted_foreground">#A1A1AA</color>
+    <color name="cym_border">#1F1F1F</color>
+    <color name="cym_border_strong">#262626</color>
+
+    <!-- Brighter gold than light mode: it has to carry on pure black -->
+    <color name="cym_accent">#D4AF37</color>
+    <color name="cym_on_accent">#000000</color>
+    <color name="cym_accent_container">#2A2208</color>
+    <color name="cym_on_accent_container">#F0D98A</color>
+
+    <color name="cym_warning">#FBBF24</color>
+    <color name="cym_destructive">#F87171</color>
+    <color name="cym_on_destructive">#1A0505</color>
+
+</resources>

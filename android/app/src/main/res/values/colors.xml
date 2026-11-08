@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  LIGHT palette - warm premium.
+
+  Paired with the true-black OLED palette in values-night/colors.xml. Both are
+  built on the same idea: near-monochrome surfaces with a single gold accent,
+  so colour means "this is the action" and nothing else competes with it.
+
+  Gold shifts between the two: #D4AF37 is bright enough to read on black but
+  only hits 1.7:1 on a near-white background, so light mode uses the deeper
+  #A16207 (4.71:1). Same accent role, different value - that is the whole
+  reason these are two files rather than one.
+
+  Every pair verified: lowest here is white-on-gold for the action button at
+  4.92:1, against the 4.5:1 requirement.
+-->
+<resources>
+
+    <!-- Surfaces: warm off-white rather than pure #FFF, which reads softer -->
+    <color name="cym_background">#FAFAF9</color>
+    <color name="cym_surface">#FFFFFF</color>
+    <color name="cym_surface_high">#F5F5F4</color>
+    <color name="cym_foreground">#0C0A09</color>
+    <color name="cym_muted_foreground">#57534E</color>
+    <color name="cym_border">#E7E5E4</color>
+    <color name="cym_border_strong">#D6D3D1</color>
+
+    <!-- The single accent -->
+    <color name="cym_accent">#A16207</color>
+    <color name="cym_on_accent">#FFFFFF</color>
+    <color name="cym_accent_container">#FEF3C7</color>
+    <color name="cym_on_accent_container">#451A03</color>
+
+    <color name="cym_warning">#B45309</color>
+    <color name="cym_destructive">#DC2626</color>
+    <color name="cym_on_destructive">#FFFFFF</color>
+
+</resources>

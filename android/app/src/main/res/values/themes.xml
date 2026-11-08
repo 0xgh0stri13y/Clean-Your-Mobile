@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!--
+      One DayNight theme. The colour names resolve from values/colors.xml or
+      values-night/colors.xml, and AppCompatDelegate decides which - so the
+      in-app Light / Dark / System toggle needs no second theme and no restart.
+    -->
+    <style name="Theme.CleanYourMobile" parent="Theme.Material3.DayNight.NoActionBar">
+
+        <item name="colorPrimary">@color/cym_accent</item>
+        <item name="colorOnPrimary">@color/cym_on_accent</item>
+        <item name="colorPrimaryContainer">@color/cym_accent_container</item>
+        <item name="colorOnPrimaryContainer">@color/cym_on_accent_container</item>
+
+        <item name="colorSecondary">@color/cym_accent</item>
+        <item name="colorOnSecondary">@color/cym_on_accent</item>
+        <item name="colorSecondaryContainer">@color/cym_surface</item>
+        <item name="colorOnSecondaryContainer">@color/cym_foreground</item>
+
+        <!-- Surfaces. colorSurface stays equal to the background so cards do
+             not paint a lighter rectangle over the true black. -->
+        <item name="android:colorBackground">@color/cym_background</item>
+        <item name="colorSurface">@color/cym_background</item>
+        <item name="colorOnSurface">@color/cym_foreground</item>
+        <item name="colorSurfaceVariant">@color/cym_surface</item>
+        <item name="colorOnSurfaceVariant">@color/cym_muted_foreground</item>
+        <item name="colorSurfaceContainer">@color/cym_surface</item>
+        <item name="colorSurfaceContainerLow">@color/cym_surface</item>
+        <item name="colorSurfaceContainerHigh">@color/cym_surface_high</item>
+        <item name="colorSurfaceContainerHighest">@color/cym_surface_high</item>
+        <item name="colorOutline">@color/cym_border_strong</item>
+        <item name="colorOutlineVariant">@color/cym_border</item>
+
+        <item name="colorError">@color/cym_destructive</item>
+        <item name="colorOnError">@color/cym_on_destructive</item>
+
+        <!-- Edge to edge: the bars take the background so there is no seam. -->
+        <item name="android:statusBarColor">@color/cym_background</item>
+        <item name="android:navigationBarColor">@color/cym_background</item>
+    </style>
+
+</resources>

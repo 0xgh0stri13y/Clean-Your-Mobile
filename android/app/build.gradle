@@ -1,0 +1,145 @@
+apply plugin: "com.android.application"
+apply plugin: "org.jetbrains.kotlin.android"
+
+android {
+    namespace "com.cleanyourmobile"
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.cleanyourmobile"
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "0.1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+
+// The app ships the same database the Clean Your Mobile shell and Python tools
+// read, copied in at build time rather than checked in here. That keeps one
+// source of truth and makes it impossible for the APK to ship a stale copy.
+//
+// database/ sits one level up, since this module lives in android/ inside the
+// main repository. Override with -PcymDatabaseDir=<path> or a cymDatabaseDir
+// entry in gradle.properties if you ever move it.
+//
+// The build fails rather than producing an APK with no database, because an
+// app with no never-touch list is exactly the thing this project refuses to be.
+def cymDatabaseDir = project.findProperty("cymDatabaseDir")
+        ?: "${rootDir}/../database"
+
+def cymRequiredFiles = ["debloat_db.json", "essential_packages.json", "brand_profiles.json"]
+
+// The check has to live in its own task, not inside the Copy below.
+//
+// A Copy task whose source directory does not exist is skipped as NO-SOURCE:
+// Gradle never runs doFirst, never consults upToDateWhen, and reports success.
+// So a build pointed at a missing or moved database silently kept whatever
+// assets were already there - which is precisely the failure this is meant to
+// prevent. A plain task with only a doLast and no declared outputs always runs.
+tasks.register("verifyDatabase") {
+    doLast {
+        def dir = file(cymDatabaseDir)
+        if (!dir.isDirectory()) {
+            throw new GradleException("""
+Cannot find the Clean Your Mobile database at:
+    ${dir}
+
+This module expects to live in android/ inside the main repository, with
+database/ one level up:
+
+    Clean Your Mobile/
+      database/     <- the database lives here
+      android/      <- this module
+
+Set cymDatabaseDir in gradle.properties, or pass -PcymDatabaseDir=<path>
+on the command line, if it is somewhere else.
+""")
+        }
+        def missing = cymRequiredFiles.findAll { !new File(dir, it).isFile() }
+        if (missing) {
+            throw new GradleException("""
+The database directory is missing ${missing.join(', ')}:
+    ${dir}
+""")
+        }
+    }
+}
+
+tasks.register("syncDatabase", Copy) {
+    dependsOn "verifyDatabase"
+    from(cymDatabaseDir) {
+        cymRequiredFiles.each { include it }
+    }
+    into "${projectDir}/src/main/assets"
+}
+
+tasks.named("preBuild") {
+    dependsOn "syncDatabase"
+}
+
+// Publish the built APK to the repository root, beside README.md, so it is a
+// visible downloadable artefact rather than something buried six folders deep
+// in build output. The name is stable and carries no version, so links to it
+// never break; the version is in the manifest and on the about row.
+//
+// This is the one APK that is deliberately committed - .gitignore excludes
+// every other *.apk, including everything under android/app/build/.
+def cymPublishedApk = "CleanYourMobile.apk"
+
+// Publish the built APK to the repository root, beside README.md, so it is a
+// visible downloadable artefact rather than something buried six folders deep
+// in build output. The name is stable and carries no version, so links to it
+// never break; the version lives in the manifest.
+//
+// This is a plain task that copies one file, not a Copy task. A Copy declares
+// its destination as an output, and the destination here is the repository
+// root - which contains android/app/build, so Gradle saw two tasks writing to
+// overlapping locations and refused. Copying the file by hand sidesteps the
+// whole output-tracking problem.
+//
+// This is the one APK that is deliberately committed; .gitignore excludes
+// every other *.apk, including everything under android/app/build/.
+androidComponents.onVariants(androidComponents.selector().withBuildType("debug")) { variant ->
+    def capped = variant.name.capitalize()
+    tasks.register("publishApk${capped}") {
+        description = "Copies the built APK to the repository root as ${cymPublishedApk}."
+        group = "build"
+        dependsOn "assemble${capped}"
+        doLast {
+            def outDir = file("${buildDir}/outputs/apk/${variant.name}")
+            def built = outDir.listFiles()?.find { it.name.endsWith(".apk") }
+            if (built == null) {
+                throw new GradleException("No APK found in ${outDir}")
+            }
+            def target = new File(rootDir.parentFile, cymPublishedApk)
+            target.bytes = built.bytes
+            logger.lifecycle("APK published: ${target} (${(target.length() / 1024) as int} KB)")
+        }
+    }
+}
+
+dependencies {
+    implementation "androidx.appcompat:appcompat:1.7.0"
+    implementation "androidx.core:core-ktx:1.13.1"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:1.2.0"
+    implementation "androidx.recyclerview:recyclerview:1.3.2"
+    implementation "com.google.android.material:material:1.12.0"
+    // Shizuku: the binder client, and the provider the manifest declares.
+    implementation "dev.rikka.shizuku:api:13.1.5"
+    implementation "dev.rikka.shizuku:provider:13.1.5"
+}

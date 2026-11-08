@@ -41,12 +41,13 @@ Inspired by [CleanYourTV](https://github.com/Gathin23/cleanyourtv), it brings th
 | **An Android phone and a computer** | [Quick start](#quick-start): a coding assistant does the work in about ten minutes. |
 | **A computer, no coding assistant** | [Doing it by hand](#doing-it-by-hand): the same job, the same scripts, run by you. |
 | **An iPhone** | Nothing here applies. iOS has no debug bridge of this kind and no preinstalled bloat to remove. |
-| **Only the phone, no computer** | Not supported *by this project*, which runs on a computer. On Android 11 and newer, [Canta](https://github.com/samolego/Canta) does it on the phone alone through [Shizuku](https://shizuku.rikka.app/); see [how the two compare](#how-does-this-compare-to-canta-and-shizuku). |
+| **Only the phone, no computer** | [`CleanYourMobile.apk`](CleanYourMobile.apk) in this repository runs on the phone itself through [Shizuku](https://shizuku.rikka.app/), on Android 11 and newer. It is a reference implementation rather than a product: [Canta](https://github.com/samolego/Canta) is more mature. See [how they compare](#how-does-this-compare-to-canta-and-shizuku). |
 | **Want to see it first** | [What a scan looks like](#what-a-scan-looks-like): real output from a real phone. |
 
 [About](#about) · [How it works](#how-it-works) · [Quick start](#quick-start) ·
 [What a scan looks like](#what-a-scan-looks-like) · [What you get](#what-you-get) ·
 [Supported phones](#supported-phones) · [Doing it by hand](#doing-it-by-hand) ·
+[The Android app](#the-android-app) ·
 [Safety](#safety) · [Restoring](#restoring-your-phone) ·
 [System updates](#after-a-system-update) · [Questions](#questions-people-ask) ·
 [Contributing](#contributing)
@@ -363,6 +364,83 @@ up and saw `Expert` would offer to remove what the other guard refuses.
 
 </details>
 
+## The Android app
+
+[`CleanYourMobile.apk`](CleanYourMobile.apk) runs the same database on the phone itself, with no
+computer involved once [Shizuku](https://shizuku.rikka.app/) is started. The source is in
+[`android/`](android/).
+
+| | |
+|---|---|
+| ![The app in dark mode: true black background, gold accent, packages listed with what each removal costs](docs/app/app-dark.png) | ![The same list in light mode](docs/app/app-light.png) |
+| *Dark, true OLED black* | *Light* |
+
+**It is a reference implementation, not a product.** It exists to show that the database and the
+three-layer guard port cleanly to Android. For everyday use on a phone,
+[Canta](https://github.com/samolego/Canta) is more mature, more complete and has thousands of
+users; the honest comparison is in [the FAQ](#how-does-this-compare-to-canta-and-shizuku).
+
+### Installing it
+
+| Step | What to do |
+|---|---|
+| **1. Shizuku** | Install it from the [GitHub release](https://github.com/RikkaApps/Shizuku/releases), not the Play Store build, which is older and has no Android 16 support. |
+| **2. Start it** | Pair over Wireless debugging on Android 11+, or start it from a computer over ADB. Android clears it on every reboot, so this has to be done again after each restart unless the phone is rooted. |
+| **3. Install the APK** | Download [`CleanYourMobile.apk`](CleanYourMobile.apk) and open it. Android will ask you to allow installs from your browser or file manager. |
+| **4. Grant access** | Open the app and tap **Grant access**; Shizuku asks you to confirm. |
+
+Android 8.0 (API 26) or newer for the app itself; Android 11 or newer to start Shizuku without a
+computer.
+
+### What it does
+
+| | |
+|---|---|
+| **Reads the same database** | All 505 packages, copied in from `database/` at build time, so the APK cannot ship a stale copy. |
+| **Detects the brand** | The same scoring as `tools/cym.py`, including the alias bonus that catches "Redmi" and "iQOO" reporting themselves as something other than their maker. The brand's notes appear at the top of the screen. |
+| **Shows what you lose** | Every row carries its `if_removed` line, which is the field this whole project exists for. |
+| **Sorts by impact** | Advertising and telemetry first, manufacturer features last. A separate axis from the safety rating: a preinstalled compass and a lock-screen ad carousel are both "Recommended", but only one is doing you harm. |
+| **Refuses what it must** | The same three layers, and `Guard.kt` is a fourth copy of the pattern generated from `scripts/lib.sh`. On a OnePlus 10 Pro it holds back 112 packages. |
+| **Backs up first** | A full snapshot of the phone before the first change, plus a restore record written before the first package comes off and an exportable text file of the undo commands. |
+| **Disables, never deletes** | `pm disable-user --user 0`. **Restore all** switches everything back on. |
+| **Light or dark** | True `#000000` OLED black or a warm light theme, with a toggle under **Appearance**. Every colour pair passes the 4.5:1 contrast requirement. |
+
+### What is verified, and what is not
+
+Tested on a OnePlus 10 Pro (NE2213), Android 16, OxygenOS 16.0.3:
+
+| Verified on hardware | Not yet exercised |
+|---|---|
+| Scan, brand detection, the guard holding back 112 packages | **Uninstall mode** — the code exists but the interface only calls disable |
+| All four Shizuku states, and the permission grant | Batching at scale: every test run has been a single package |
+| The privileged disable (`enabled 0 → 3`) and restore (`3 → 1`) | The three-consecutive-failure abort |
+| The backup snapshot and the exported undo file | The between-batch health check |
+| The light and dark themes, search, filters, selection | Any phone other than the one above |
+
+The command-line tools are the better-tested path by a wide margin: they have been run against two
+brands and a real 32-package removal, which is where most of this project's bugs were found.
+
+### Building it yourself
+
+```bash
+gradle -p android assembleDebug      # build only
+gradle -p android publishApkDebug    # build, then copy the APK to the repository root
+```
+
+Needs JDK 17 and the Android SDK, platform 35 with build-tools 34 or newer. `database/` is read
+from one level up; the build **fails** rather than producing an APK with no never-touch list.
+
+`Guard.kt` holds the **fourth** copy of the protected-name pattern, generated from
+`scripts/lib.sh`. Never edit it by hand — run `python tools/sync_guard.py`, which checks that all
+four copies agree.
+
+> The published APK is a **debug build**, signed with Android's debug key. That is fine for
+> sideloading, but it cannot be upgraded over a release build later, and some people reasonably
+> decline to install debug APKs from the internet. Build it yourself if you would rather not
+> trust the committed one.
+
+**More:** [`android/README.md`](android/README.md).
+
 ## Safety
 
 | | |
@@ -660,12 +738,15 @@ clean-your-mobile/
 │   ├── report.py                 # before and after
 │   ├── check.py                  # what a system update put back
 │   └── validate_db.py            # database integrity
+├── CleanYourMobile.apk           # the Android app, built and ready to install
+├── android/                      # its source: Kotlin, Shizuku, the 4th guard copy
 ├── docs/
 │   ├── TROUBLESHOOTING.md        # every failure mode and how to get out of it
 │   ├── DATABASE.md               # the schema, the safety ratings, the guard
 │   ├── RESTORE.md                # why this is reversible, and the four ways back
 │   ├── FIRMWARE.md               # system updates that undo your work
-│   └── banner.png                # the banner at the top of this page
+│   ├── banner.png                # the banner at the top of this page
+│   └── app/                      # screenshots of the Android app
 └── backups/                      # one directory per session, git-ignored
 ```
 

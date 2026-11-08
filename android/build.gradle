@@ -1,0 +1,14 @@
+// The buildscript classpath needs its own repositories: pluginManagement in
+// settings.gradle only applies to the plugins {} DSL, not to a classic
+// buildscript block.
+buildscript {
+    ext.kotlin_version = "1.9.24"
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath "com.android.tools.build:gradle:8.5.2"
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
