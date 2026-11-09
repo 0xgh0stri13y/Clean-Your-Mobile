@@ -36,21 +36,104 @@ Inspired by [CleanYourTV](https://github.com/Gathin23/cleanyourtv), it brings th
 
 ## Start here
 
-| You have | Go to |
-|---|---|
-| **An Android phone and a computer** | [Quick start](#quick-start): a coding assistant does the work in about ten minutes. |
-| **A computer, no coding assistant** | [Doing it by hand](#doing-it-by-hand): the same job, the same scripts, run by you. |
-| **An iPhone** | Nothing here applies. iOS has no debug bridge of this kind and no preinstalled bloat to remove. |
-| **Only the phone, no computer** | [`CleanYourMobile.apk`](CleanYourMobile.apk) in this repository runs on the phone itself through [Shizuku](https://shizuku.rikka.app/), on Android 11 and newer. It is a reference implementation rather than a product: [Canta](https://github.com/samolego/Canta) is more mature. See [how they compare](#how-does-this-compare-to-canta-and-shizuku). |
-| **Want to see it first** | [What a scan looks like](#what-a-scan-looks-like): real output from a real phone. |
+There are three ways to use this, in order of how much you have to set up.
 
-[About](#about) · [How it works](#how-it-works) · [Quick start](#quick-start) ·
+| You have | Go to | Effort |
+|---|---|---|
+| **Only the phone** | [The Android app](#the-android-app) — [`CleanYourMobile.apk`](CleanYourMobile.apk) runs on the phone through [Shizuku](https://shizuku.rikka.app/), Android 11+ | Lowest |
+| **A phone and a computer** | [Quick start](#quick-start) — a coding assistant does the work in about ten minutes | Low |
+| **A computer, no assistant** | [Doing it by hand](#doing-it-by-hand) — the same scripts, run by you. The best-tested path | Medium |
+| **An iPhone** | Nothing here applies. iOS has no debug bridge of this kind and no preinstalled bloat to remove | — |
+| **Want to see it first** | [What a scan looks like](#what-a-scan-looks-like) — real output from a real phone | — |
+
+**Use it:** [The Android app](#the-android-app) · [Quick start](#quick-start) ·
+[Doing it by hand](#doing-it-by-hand)
+
+**Understand it:** [How it works](#how-it-works) ·
 [What a scan looks like](#what-a-scan-looks-like) · [What you get](#what-you-get) ·
-[Supported phones](#supported-phones) · [Doing it by hand](#doing-it-by-hand) ·
-[The Android app](#the-android-app) ·
-[Safety](#safety) · [Restoring](#restoring-your-phone) ·
-[System updates](#after-a-system-update) · [Questions](#questions-people-ask) ·
-[Contributing](#contributing)
+[Supported phones](#supported-phones) · [Safety](#safety)
+
+**When you need it:** [Restoring](#restoring-your-phone) ·
+[System updates](#after-a-system-update) ·
+[When something goes wrong](#when-something-goes-wrong) ·
+[Questions](#questions-people-ask) · [Contributing](#contributing)
+
+## The Android app
+
+[`CleanYourMobile.apk`](CleanYourMobile.apk) runs the same database on the phone itself, with no
+computer involved once [Shizuku](https://shizuku.rikka.app/) is started. The source is in
+[`android/`](android/).
+
+| | |
+|---|---|
+| ![The app in dark mode: true black background, gold accent, packages listed with what each removal costs](docs/app/app-dark.png) | ![The same list in light mode](docs/app/app-light.png) |
+| *Dark, true OLED black* | *Light* |
+
+**It is a reference implementation, not a product.** It exists to show that the database and the
+three-layer guard port cleanly to Android. For everyday use on a phone,
+[Canta](https://github.com/samolego/Canta) is more mature, more complete and has thousands of
+users; the honest comparison is in [the FAQ](#how-does-this-compare-to-canta-and-shizuku).
+
+### Installing it
+
+| Step | What to do |
+|---|---|
+| **1. Shizuku** | Install it from the [GitHub release](https://github.com/RikkaApps/Shizuku/releases), not the Play Store build, which is older and has no Android 16 support. |
+| **2. Start it** | Pair over Wireless debugging on Android 11+, or start it from a computer over ADB. Android clears it on every reboot, so this has to be done again after each restart unless the phone is rooted. |
+| **3. Install the APK** | Download [`CleanYourMobile.apk`](CleanYourMobile.apk) and open it. Android will ask you to allow installs from your browser or file manager. |
+| **4. Grant access** | Open the app and tap **Grant access**; Shizuku asks you to confirm. |
+
+Android 8.0 (API 26) or newer for the app itself; Android 11 or newer to start Shizuku without a
+computer.
+
+### What it does
+
+| | |
+|---|---|
+| **Reads the same database** | All 505 packages, copied in from `database/` at build time, so the APK cannot ship a stale copy. |
+| **Detects the brand** | The same scoring as `tools/cym.py`, including the alias bonus that catches "Redmi" and "iQOO" reporting themselves as something other than their maker. The brand's notes appear at the top of the screen. |
+| **Shows what you lose** | Every row carries its `if_removed` line, which is the field this whole project exists for. |
+| **Sorts by impact** | Advertising and telemetry first, manufacturer features last. A separate axis from the safety rating: a preinstalled compass and a lock-screen ad carousel are both "Recommended", but only one is doing you harm. |
+| **Refuses what it must** | The same three layers, and `Guard.kt` is a fourth copy of the pattern generated from `scripts/lib.sh`. On a OnePlus 10 Pro it holds back 112 packages. |
+| **Backs up first** | A full snapshot of the phone before the first change, plus a restore record written before the first package comes off and an exportable text file of the undo commands. |
+| **Disables, never deletes** | `pm disable-user --user 0`. **Restore all** switches everything back on. |
+| **Light or dark** | True `#000000` OLED black or a warm light theme, with a toggle under **Appearance**. Every colour pair passes the 4.5:1 contrast requirement. |
+
+### What is verified, and what is not
+
+Tested on a OnePlus 10 Pro (NE2213), Android 16, OxygenOS 16.0.3:
+
+| Verified on hardware | Not yet exercised |
+|---|---|
+| Scan, brand detection, the guard holding back 112 packages | **Uninstall mode** — the code exists but the interface only calls disable |
+| All four Shizuku states, and the permission grant | Batching at scale: every test run has been a single package |
+| The privileged disable (`enabled 0 → 3`) and restore (`3 → 1`) | The three-consecutive-failure abort |
+| The backup snapshot and the exported undo file | The between-batch health check |
+| The light and dark themes, search, filters, selection | Any phone other than the one above |
+
+The command-line tools are the better-tested path by a wide margin: they have been run against two
+brands and a real 32-package removal, which is where most of this project's bugs were found.
+
+### Building it yourself
+
+```bash
+gradle -p android assembleDebug      # build only
+gradle -p android publishApkDebug    # build, then copy the APK to the repository root
+```
+
+Needs JDK 17 and the Android SDK, platform 35 with build-tools 34 or newer. `database/` is read
+from one level up; the build **fails** rather than producing an APK with no never-touch list.
+
+`Guard.kt` holds the **fourth** copy of the protected-name pattern, generated from
+`scripts/lib.sh`. Never edit it by hand — run `python tools/sync_guard.py`, which checks that all
+four copies agree.
+
+> The published APK is a **debug build**, signed with Android's debug key. That is fine for
+> sideloading, but it cannot be upgraded over a release build later, and some people reasonably
+> decline to install debug APKs from the internet. Build it yourself if you would rather not
+> trust the committed one.
+
+**More:** [`android/README.md`](android/README.md).
 
 ## How it works
 
@@ -99,6 +182,121 @@ instead of writing its own, and that is where the never-touch guard, the batchin
 checks and the restore record live. An assistant improvising `pm uninstall` loops has none of them.
 
 With this repository as context it takes about ten minutes.
+
+## Doing it by hand
+
+Everything the assistant does, you can run yourself. One thing has to be on the computer first:
+
+| You need | For |
+|---|---|
+| **Python 3.8 or newer** | The tools in `tools/`. They import nothing outside the standard library, so there is nothing to install. |
+
+The Android platform tools are installed by the first script if they are missing, from Google's own
+download. Nothing below needs root, and `--dry-run` changes nothing at all.
+
+```bash
+git clone https://github.com/0xgh0stri13y/Clean-Your-Mobile
+cd clean-your-mobile
+
+bash scripts/setup_adb.sh                 # install the platform tools if missing
+bash scripts/connect.sh                   # USB; --wireless to pair over Wi-Fi
+bash scripts/snapshot.sh before           # measure, and open a session
+
+python tools/scan.py --plan               # match the database, write plan.txt
+                                          # --level recommended | advanced | expert
+
+bash scripts/debloat.sh backups/<session>/plan.txt --dry-run   # read this first
+bash scripts/debloat.sh backups/<session>/plan.txt             # apply it
+
+adb reboot && adb wait-for-device
+bash scripts/snapshot.sh after
+python tools/report.py                    # report.md, report.json, report.txt
+```
+
+| Tool | What it does |
+|---|---|
+| [`scripts/setup_adb.sh`](scripts/setup_adb.sh) | Installs the Android platform tools: Homebrew or your package manager first, Google's official zip as a fallback. |
+| [`scripts/connect.sh`](scripts/connect.sh) | Finds the phone over USB, pairs over Wi-Fi with a pairing code, or moves a trusted USB phone onto Wi-Fi. Explains each failure instead of printing the adb error. |
+| [`scripts/snapshot.sh`](scripts/snapshot.sh) | Measures packages, RAM, storage, battery, processes, services and permission holders into one session directory, as readable text and as JSON. |
+| [`tools/scan.py`](tools/scan.py) | Reads the phone, detects the brand, matches all 505 database entries, and writes a plan with each line's consequence beside it. `--from-list` scores a saved package list with no phone attached. |
+| [`scripts/debloat.sh`](scripts/debloat.sh) | Applies a plan: refuses anything protected, batches of five, a health check between batches, stops after three consecutive failures, verifies each removal, and writes the restore record before the first one. |
+| [`scripts/restore.sh`](scripts/restore.sh) | Puts a session back, all of it or one package or every session on record, and verifies each one. |
+| [`tools/report.py`](tools/report.py) | Compares the two snapshots and the two package lists. Spots packages that came back on their own, and says which numbers are real. |
+| [`tools/check.py`](tools/check.py) | Compares the phone with the plan that was applied, for what a system update put back. `--fix` re-applies it; `--quiet` is an exit code for a scheduled job. |
+| [`tools/validate_db.py`](tools/validate_db.py) | Database integrity: the schema, duplicates, ratings that disagree across brands, and the one that matters, anything on the never-touch list rated as removable. |
+
+Your own plans can live outside the repository: plan paths are relative to the directory you run
+from, and absolute paths work too.
+
+<details>
+<summary><b>Windows (PowerShell)</b></summary>
+
+Every device script has a PowerShell twin next to it. The Python tools are the same everywhere.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\setup_adb.ps1 -Persist
+powershell -ExecutionPolicy Bypass -File scripts\connect.ps1
+powershell -ExecutionPolicy Bypass -File scripts\snapshot.ps1 before
+
+python tools\scan.py --plan
+
+powershell -ExecutionPolicy Bypass -File scripts\debloat.ps1 backups\<session>\plan.txt -DryRun
+powershell -ExecutionPolicy Bypass -File scripts\debloat.ps1 backups\<session>\plan.txt
+
+adb reboot; adb wait-for-device
+powershell -ExecutionPolicy Bypass -File scripts\snapshot.ps1 after
+python tools\report.py
+```
+
+Restore with `scripts\restore.ps1`, which takes `-Package <name>` for one app, `-List` to see what
+is on record, or `-All` for every session.
+
+These are written for Windows PowerShell 5.1, so they also work on PowerShell 7. They are plain
+ASCII on purpose: 5.1 reads a script without a byte-order mark as ANSI, and one emoji in the file
+breaks the parse before a single line runs.
+
+</details>
+
+<details>
+<summary><b>How the scripts protect your phone</b></summary>
+
+Three checks stand between a plan and a package, and a package has to clear all three.
+
+**1. The never-touch list.** [`database/essential_packages.json`](database/essential_packages.json)
+holds 202 entries covering phone calls, SMS, emergency alerts, SIM services, Wi-Fi, Bluetooth,
+camera, keyboard, launcher, Settings, Play Store, Play Services, keystore, system UI, the setup
+wizard and permission management. A package on it is refused. There is no flag to override this,
+and the scripts refuse to run at all if the file is missing or parses as empty, rather than
+proceeding without a guard.
+
+**2. The protected-name pattern.** An unusual ROM has packages no list has seen. Anything whose
+name matches a protected category is also refused: `systemui`, `telephony`, `dialer`, `incallui`,
+`inputmethod`, `keystore`, `launcher`, `setupwizard` and a dozen more, plus build-time
+infrastructure such as runtime resource overlays, framework resources, GPU drivers and graphics
+layers. A OnePlus 10 Pro carries more than thirty of those, none of them an app anyone installed.
+`CYM_ALLOW_PROTECTED=1` relaxes this one check for the rare ROM that names a theme store
+`...launcher.themes`. It does not relax the never-touch list.
+
+This pattern is written out in three files, [`scripts/lib.sh`](scripts/lib.sh),
+[`scripts/lib.ps1`](scripts/lib.ps1) and [`tools/cym.py`](tools/cym.py), on purpose. The
+duplication means no single file being wrong or missing can disarm the guard.
+
+**3. What the phone is using right now.** `tools/scan.py` asks the phone which launcher owns HOME
+and which keyboard is the active input method, and drops both from the plan whatever the database
+says about them. `scripts/debloat.sh` checks that something still answers HOME before it starts and
+again after it finishes.
+
+On top of that: batches of five with a health check between each, which sends HOME and then
+confirms the package service still answers, because a phone that cannot run `cmd package` cannot be
+restored either; an automatic attempt to put the last batch back if that check fails; and a stop
+after three consecutive failures, since that means something systemic changed rather than one
+awkward package.
+
+`python tools/validate_db.py` enforces the consistency these rely on. An entry on the never-touch
+list rated anything but `Unsafe` is an error rather than a warning, because a tool that looked it
+up and saw `Expert` would offer to remove what the other guard refuses.
+
+</details>
 
 ## What a scan looks like
 
@@ -248,198 +446,6 @@ person with your phone skips that step: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 **Not supported:** iPhones, and any phone where an employer's management profile has removed
 developer options. On a work-managed phone, don't: see [Safety](#safety).
-
-## Doing it by hand
-
-Everything the assistant does, you can run yourself. One thing has to be on the computer first:
-
-| You need | For |
-|---|---|
-| **Python 3.8 or newer** | The tools in `tools/`. They import nothing outside the standard library, so there is nothing to install. |
-
-The Android platform tools are installed by the first script if they are missing, from Google's own
-download. Nothing below needs root, and `--dry-run` changes nothing at all.
-
-```bash
-git clone https://github.com/0xgh0stri13y/Clean-Your-Mobile
-cd clean-your-mobile
-
-bash scripts/setup_adb.sh                 # install the platform tools if missing
-bash scripts/connect.sh                   # USB; --wireless to pair over Wi-Fi
-bash scripts/snapshot.sh before           # measure, and open a session
-
-python tools/scan.py --plan               # match the database, write plan.txt
-                                          # --level recommended | advanced | expert
-
-bash scripts/debloat.sh backups/<session>/plan.txt --dry-run   # read this first
-bash scripts/debloat.sh backups/<session>/plan.txt             # apply it
-
-adb reboot && adb wait-for-device
-bash scripts/snapshot.sh after
-python tools/report.py                    # report.md, report.json, report.txt
-```
-
-| Tool | What it does |
-|---|---|
-| [`scripts/setup_adb.sh`](scripts/setup_adb.sh) | Installs the Android platform tools: Homebrew or your package manager first, Google's official zip as a fallback. |
-| [`scripts/connect.sh`](scripts/connect.sh) | Finds the phone over USB, pairs over Wi-Fi with a pairing code, or moves a trusted USB phone onto Wi-Fi. Explains each failure instead of printing the adb error. |
-| [`scripts/snapshot.sh`](scripts/snapshot.sh) | Measures packages, RAM, storage, battery, processes, services and permission holders into one session directory, as readable text and as JSON. |
-| [`tools/scan.py`](tools/scan.py) | Reads the phone, detects the brand, matches all 505 database entries, and writes a plan with each line's consequence beside it. `--from-list` scores a saved package list with no phone attached. |
-| [`scripts/debloat.sh`](scripts/debloat.sh) | Applies a plan: refuses anything protected, batches of five, a health check between batches, stops after three consecutive failures, verifies each removal, and writes the restore record before the first one. |
-| [`scripts/restore.sh`](scripts/restore.sh) | Puts a session back, all of it or one package or every session on record, and verifies each one. |
-| [`tools/report.py`](tools/report.py) | Compares the two snapshots and the two package lists. Spots packages that came back on their own, and says which numbers are real. |
-| [`tools/check.py`](tools/check.py) | Compares the phone with the plan that was applied, for what a system update put back. `--fix` re-applies it; `--quiet` is an exit code for a scheduled job. |
-| [`tools/validate_db.py`](tools/validate_db.py) | Database integrity: the schema, duplicates, ratings that disagree across brands, and the one that matters, anything on the never-touch list rated as removable. |
-
-Your own plans can live outside the repository: plan paths are relative to the directory you run
-from, and absolute paths work too.
-
-<details>
-<summary><b>Windows (PowerShell)</b></summary>
-
-Every device script has a PowerShell twin next to it. The Python tools are the same everywhere.
-
-```powershell
-powershell -ExecutionPolicy Bypass -File scripts\setup_adb.ps1 -Persist
-powershell -ExecutionPolicy Bypass -File scripts\connect.ps1
-powershell -ExecutionPolicy Bypass -File scripts\snapshot.ps1 before
-
-python tools\scan.py --plan
-
-powershell -ExecutionPolicy Bypass -File scripts\debloat.ps1 backups\<session>\plan.txt -DryRun
-powershell -ExecutionPolicy Bypass -File scripts\debloat.ps1 backups\<session>\plan.txt
-
-adb reboot; adb wait-for-device
-powershell -ExecutionPolicy Bypass -File scripts\snapshot.ps1 after
-python tools\report.py
-```
-
-Restore with `scripts\restore.ps1`, which takes `-Package <name>` for one app, `-List` to see what
-is on record, or `-All` for every session.
-
-These are written for Windows PowerShell 5.1, so they also work on PowerShell 7. They are plain
-ASCII on purpose: 5.1 reads a script without a byte-order mark as ANSI, and one emoji in the file
-breaks the parse before a single line runs.
-
-</details>
-
-<details>
-<summary><b>How the scripts protect your phone</b></summary>
-
-Three checks stand between a plan and a package, and a package has to clear all three.
-
-**1. The never-touch list.** [`database/essential_packages.json`](database/essential_packages.json)
-holds 202 entries covering phone calls, SMS, emergency alerts, SIM services, Wi-Fi, Bluetooth,
-camera, keyboard, launcher, Settings, Play Store, Play Services, keystore, system UI, the setup
-wizard and permission management. A package on it is refused. There is no flag to override this,
-and the scripts refuse to run at all if the file is missing or parses as empty, rather than
-proceeding without a guard.
-
-**2. The protected-name pattern.** An unusual ROM has packages no list has seen. Anything whose
-name matches a protected category is also refused: `systemui`, `telephony`, `dialer`, `incallui`,
-`inputmethod`, `keystore`, `launcher`, `setupwizard` and a dozen more, plus build-time
-infrastructure such as runtime resource overlays, framework resources, GPU drivers and graphics
-layers. A OnePlus 10 Pro carries more than thirty of those, none of them an app anyone installed.
-`CYM_ALLOW_PROTECTED=1` relaxes this one check for the rare ROM that names a theme store
-`...launcher.themes`. It does not relax the never-touch list.
-
-This pattern is written out in three files, [`scripts/lib.sh`](scripts/lib.sh),
-[`scripts/lib.ps1`](scripts/lib.ps1) and [`tools/cym.py`](tools/cym.py), on purpose. The
-duplication means no single file being wrong or missing can disarm the guard.
-
-**3. What the phone is using right now.** `tools/scan.py` asks the phone which launcher owns HOME
-and which keyboard is the active input method, and drops both from the plan whatever the database
-says about them. `scripts/debloat.sh` checks that something still answers HOME before it starts and
-again after it finishes.
-
-On top of that: batches of five with a health check between each, which sends HOME and then
-confirms the package service still answers, because a phone that cannot run `cmd package` cannot be
-restored either; an automatic attempt to put the last batch back if that check fails; and a stop
-after three consecutive failures, since that means something systemic changed rather than one
-awkward package.
-
-`python tools/validate_db.py` enforces the consistency these rely on. An entry on the never-touch
-list rated anything but `Unsafe` is an error rather than a warning, because a tool that looked it
-up and saw `Expert` would offer to remove what the other guard refuses.
-
-</details>
-
-## The Android app
-
-[`CleanYourMobile.apk`](CleanYourMobile.apk) runs the same database on the phone itself, with no
-computer involved once [Shizuku](https://shizuku.rikka.app/) is started. The source is in
-[`android/`](android/).
-
-| | |
-|---|---|
-| ![The app in dark mode: true black background, gold accent, packages listed with what each removal costs](docs/app/app-dark.png) | ![The same list in light mode](docs/app/app-light.png) |
-| *Dark, true OLED black* | *Light* |
-
-**It is a reference implementation, not a product.** It exists to show that the database and the
-three-layer guard port cleanly to Android. For everyday use on a phone,
-[Canta](https://github.com/samolego/Canta) is more mature, more complete and has thousands of
-users; the honest comparison is in [the FAQ](#how-does-this-compare-to-canta-and-shizuku).
-
-### Installing it
-
-| Step | What to do |
-|---|---|
-| **1. Shizuku** | Install it from the [GitHub release](https://github.com/RikkaApps/Shizuku/releases), not the Play Store build, which is older and has no Android 16 support. |
-| **2. Start it** | Pair over Wireless debugging on Android 11+, or start it from a computer over ADB. Android clears it on every reboot, so this has to be done again after each restart unless the phone is rooted. |
-| **3. Install the APK** | Download [`CleanYourMobile.apk`](CleanYourMobile.apk) and open it. Android will ask you to allow installs from your browser or file manager. |
-| **4. Grant access** | Open the app and tap **Grant access**; Shizuku asks you to confirm. |
-
-Android 8.0 (API 26) or newer for the app itself; Android 11 or newer to start Shizuku without a
-computer.
-
-### What it does
-
-| | |
-|---|---|
-| **Reads the same database** | All 505 packages, copied in from `database/` at build time, so the APK cannot ship a stale copy. |
-| **Detects the brand** | The same scoring as `tools/cym.py`, including the alias bonus that catches "Redmi" and "iQOO" reporting themselves as something other than their maker. The brand's notes appear at the top of the screen. |
-| **Shows what you lose** | Every row carries its `if_removed` line, which is the field this whole project exists for. |
-| **Sorts by impact** | Advertising and telemetry first, manufacturer features last. A separate axis from the safety rating: a preinstalled compass and a lock-screen ad carousel are both "Recommended", but only one is doing you harm. |
-| **Refuses what it must** | The same three layers, and `Guard.kt` is a fourth copy of the pattern generated from `scripts/lib.sh`. On a OnePlus 10 Pro it holds back 112 packages. |
-| **Backs up first** | A full snapshot of the phone before the first change, plus a restore record written before the first package comes off and an exportable text file of the undo commands. |
-| **Disables, never deletes** | `pm disable-user --user 0`. **Restore all** switches everything back on. |
-| **Light or dark** | True `#000000` OLED black or a warm light theme, with a toggle under **Appearance**. Every colour pair passes the 4.5:1 contrast requirement. |
-
-### What is verified, and what is not
-
-Tested on a OnePlus 10 Pro (NE2213), Android 16, OxygenOS 16.0.3:
-
-| Verified on hardware | Not yet exercised |
-|---|---|
-| Scan, brand detection, the guard holding back 112 packages | **Uninstall mode** — the code exists but the interface only calls disable |
-| All four Shizuku states, and the permission grant | Batching at scale: every test run has been a single package |
-| The privileged disable (`enabled 0 → 3`) and restore (`3 → 1`) | The three-consecutive-failure abort |
-| The backup snapshot and the exported undo file | The between-batch health check |
-| The light and dark themes, search, filters, selection | Any phone other than the one above |
-
-The command-line tools are the better-tested path by a wide margin: they have been run against two
-brands and a real 32-package removal, which is where most of this project's bugs were found.
-
-### Building it yourself
-
-```bash
-gradle -p android assembleDebug      # build only
-gradle -p android publishApkDebug    # build, then copy the APK to the repository root
-```
-
-Needs JDK 17 and the Android SDK, platform 35 with build-tools 34 or newer. `database/` is read
-from one level up; the build **fails** rather than producing an APK with no never-touch list.
-
-`Guard.kt` holds the **fourth** copy of the protected-name pattern, generated from
-`scripts/lib.sh`. Never edit it by hand — run `python tools/sync_guard.py`, which checks that all
-four copies agree.
-
-> The published APK is a **debug build**, signed with Android's debug key. That is fine for
-> sideloading, but it cannot be upgraded over a release build later, and some people reasonably
-> decline to install debug APKs from the internet. Build it yourself if you would rather not
-> trust the committed one.
-
-**More:** [`android/README.md`](android/README.md).
 
 ## Safety
 
@@ -720,7 +726,9 @@ clean-your-mobile/
 ├── PROMPT.md                     # paste this to your coding assistant
 ├── AGENTS.md                     # the rules an agent must follow, binding
 ├── CONTRIBUTING.md               # how to add packages and brand profiles
+├── CODE_OF_CONDUCT.md            # be decent
 ├── SECURITY.md                   # what counts as a vulnerability, and how to report it
+├── .github/                      # issue templates and the pull request checklist
 ├── database/
 │   ├── debloat_db.json           # 505 packages: what they are, what you lose
 │   ├── essential_packages.json   # 202 never-touch entries, no override
@@ -757,28 +765,37 @@ the next person with that model does not have to rediscover it.
 [CONTRIBUTING.md](CONTRIBUTING.md) has the format and the testing we ask for.
 Contributing through a coding agent? [AGENTS.md](AGENTS.md) gives it the same rules.
 
-| How to help | What it means |
-|---|---|
-| **A package entry** | The most useful one. A scan that says "not in the database" is a gap you can close. |
-| **A correction** | A rating that is too generous, or an `if_removed` that turned out to be wrong. These are worth more than new entries. |
-| **A brand profile** | Sony, ZTE, Nubia, Meizu, Sharp, Lava, anything nobody has described yet. |
-| **A `special_notes` paragraph** | The thing you learned the hard way about your brand. No tool can derive it. |
-| **A troubleshooting entry** | A failure you hit and how you got out of it. |
+| How to help | What it means | Start with |
+|---|---|---|
+| **A package entry** | The most useful one. A scan that says "not in the database" is a gap you can close. | [Package issue](../../issues/new?template=package.yml) |
+| **A correction** | A rating that is too generous, or an `if_removed` that turned out to be wrong. **Worth more than new entries.** | [Package issue](../../issues/new?template=package.yml) |
+| **A brand profile** | Sony, ZTE, Nubia, Meizu, Sharp, Lava, anything nobody has described yet. | [Brand issue](../../issues/new?template=brand.yml) |
+| **A `special_notes` paragraph** | The thing you learned the hard way about your brand. No tool can derive it. | [Brand issue](../../issues/new?template=brand.yml) |
+| **A troubleshooting entry** | A failure you hit and how you got out of it. | [Bug report](../../issues/new?template=bug.yml) |
 
 The one thing we ask: test it on a phone you own, then use that phone for a day. A package that
 breaks something subtle, such as notifications from one app, a camera mode, or emergency alerts,
 will not show up in the first five minutes. And `python tools/validate_db.py` has to pass.
 
 ```bash
-python tools/validate_db.py
+python tools/validate_db.py     # database integrity
+python tools/sync_guard.py      # all four copies of the guard still agree
+bash -n scripts/*.sh            # shell syntax
 ```
+
+The [pull request template](.github/PULL_REQUEST_TEMPLATE.md) lists these, plus the four rules from
+[AGENTS.md](AGENTS.md) that a change to the tools cannot break. Be decent while you are here:
+[CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md).
 
 ## Contact
 
 | For | Where |
 |---|---|
-| **Questions about your phone** | [GitHub Discussions](https://github.com/0xgh0stri13y/Clean-Your-Mobile/discussions) |
-| **A bug, or a database correction** | [Issues](https://github.com/0xgh0stri13y/Clean-Your-Mobile/issues) |
+| **My phone is misbehaving right now** | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) first — nothing is deleted, so a reboot fixes most of it |
+| **Is it safe to remove X?** | [Discussions](https://github.com/0xgh0stri13y/Clean-Your-Mobile/discussions) |
+| **A package to add or correct** | [Package issue](../../issues/new?template=package.yml) |
+| **A brand with no profile** | [Brand issue](../../issues/new?template=brand.yml) |
+| **Something went wrong** | [Bug report](../../issues/new?template=bug.yml) |
 | **Security issues** | Privately, through the Security tab. See [`SECURITY.md`](SECURITY.md) |
 
 ## Legal

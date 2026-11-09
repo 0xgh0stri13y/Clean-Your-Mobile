@@ -1,0 +1,18 @@
+blank_issues_enabled: true
+contact_links:
+  - name: My phone is misbehaving right now
+    url: https://github.com/0xgh0stri13y/Clean-Your-Mobile/blob/main/docs/TROUBLESHOOTING.md
+    about: >
+      Start here, not with an issue. Nothing is ever deleted, so a reboot fixes
+      most of it, and scripts/restore.sh undoes the rest.
+
+  - name: A question about your phone
+    url: https://github.com/0xgh0stri13y/Clean-Your-Mobile/discussions
+    about: Discussions are better than issues for "is it safe to remove X?"
+
+  - name: A security vulnerability
+    url: https://github.com/0xgh0stri13y/Clean-Your-Mobile/security/advisories/new
+    about: >
+      Report privately, not as a public issue. SECURITY.md explains what counts
+      — anything that reaches a removal without passing the never-touch guard
+      is the one that matters most.

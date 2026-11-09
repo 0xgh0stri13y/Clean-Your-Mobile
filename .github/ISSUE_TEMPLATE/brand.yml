@@ -1,0 +1,76 @@
+name: Brand profile
+description: A manufacturer the database has no profile for
+title: "[brand] "
+labels: ["database", "brand"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Brands with no profile yet include Sony, ZTE, Nubia, Meizu, Sharp, Lava
+        and Micromax. The universal, Google and carrier entries still apply to
+        them — a profile adds the brand's own packages and, more importantly,
+        the things someone would otherwise learn the hard way.
+
+  - type: input
+    id: brand
+    attributes:
+      label: Brand and OS
+      placeholder: "Sony — Xperia UI"
+    validations:
+      required: true
+
+  - type: input
+    id: phone
+    attributes:
+      label: Phone you are working from
+      placeholder: "Xperia 1 VI, Android 15"
+    validations:
+      required: true
+
+  - type: textarea
+    id: prefixes
+    attributes:
+      label: Package prefixes
+      description: >
+        How the brand's own packages start. Run
+        `adb shell pm list packages | sort` and look for the repeated prefixes.
+      placeholder: |
+        com.sonymobile
+        com.sonyericsson
+    validations:
+      required: true
+
+  - type: input
+    id: aliases
+    attributes:
+      label: What does ro.product.brand report?
+      description: >
+        This matters more than it looks. Xiaomi phones report "Redmi" or
+        "POCO", vivo phones report "iQOO". Without the alias the profile is
+        matched on package prefixes alone.
+      placeholder: "adb shell getprop ro.product.brand"
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: What should someone know before debloating this brand?
+      description: >
+        The most valuable field, and the only one no tool can derive. The thing
+        you would tell a friend. For example: recent Huawei phones ship without
+        Play Services, so removing AppGallery leaves them with no way to
+        install anything.
+    validations:
+      required: true
+
+  - type: textarea
+    id: targets
+    attributes:
+      label: Common safe removals on this brand
+      placeholder: |
+        Lock screen magazine
+        The manufacturer's app store
+        Telemetry and log upload
+    validations:
+      required: false

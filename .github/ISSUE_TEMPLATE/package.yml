@@ -1,0 +1,99 @@
+name: Package to add or correct
+description: A package the database does not know, or one whose rating or consequence is wrong
+title: "[pkg] "
+labels: ["database"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This is the most useful kind of report. A package the database does not
+        know is a gap the next person with your phone also hits.
+
+        **A correction is worth more than a new entry.** If a rating turned out
+        to be too generous, or an `if_removed` line was wrong, say so — that is
+        how the database gets safer.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What is this?
+      options:
+        - A package the database does not recognise
+        - A rating that is wrong (too generous or too cautious)
+        - An "if removed" line that turned out to be wrong
+        - A package that cannot be removed on my ROM
+    validations:
+      required: true
+
+  - type: input
+    id: package
+    attributes:
+      label: Package name
+      description: The exact name, as `adb shell pm list packages` prints it.
+      placeholder: com.example.something
+    validations:
+      required: true
+
+  - type: input
+    id: phone
+    attributes:
+      label: Phone
+      placeholder: "OnePlus NE2213, Android 16, OxygenOS 16.0.3"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What is it, and what does it do?
+      description: >
+        The app's label in Settings, what it appears to be for, and anything you
+        found out about it. The package name alone is a hint, not a source.
+    validations:
+      required: true
+
+  - type: textarea
+    id: if_removed
+    attributes:
+      label: What do you lose if it goes?
+      description: >
+        The field this database exists for. One sentence a non-technical person
+        could act on — "Bixby voice commands stop working, Google Assistant
+        still works", not "may break functionality". If you cannot say, leave it
+        blank and say so; that is useful too.
+      placeholder: Concretely, what stops working?
+    validations:
+      required: false
+
+  - type: dropdown
+    id: safety
+    attributes:
+      label: What rating would you give it?
+      description: >
+        When in doubt, pick the more cautious one. Expert costs a careful user
+        nothing; a wrong Recommended costs someone a working feature.
+      options:
+        - "Recommended — no side effects for anyone"
+        - "Advanced — safe for most, a minor OEM feature goes with it"
+        - "Expert — an ecosystem feature goes, or data must be moved first"
+        - "Unsafe — must never be removed"
+        - "Not sure"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: tested
+    attributes:
+      label: Testing
+      options:
+        - label: I removed it on a phone I own and used that phone afterwards
+          required: false
+        - label: I used the phone for a day or more before reporting
+          required: false
+        - label: Calls, texts, camera, and the apps I actually use still work
+          required: false
+  - type: markdown
+    attributes:
+      value: >
+        The checkboxes are not required. An untested suggestion is still welcome
+        — it will just be rated cautiously until someone confirms it.

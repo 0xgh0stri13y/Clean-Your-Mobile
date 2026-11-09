@@ -1,0 +1,79 @@
+name: Something went wrong
+description: A script, tool or the app misbehaved
+title: "[bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: [docs/TROUBLESHOOTING.md](../blob/main/docs/TROUBLESHOOTING.md)
+        covers the failures that come up most — `unauthorized` devices, removals
+        the ROM refuses, missing launchers, and the recovery ladder.
+
+        **If your phone is currently in a bad state, start there, not here.**
+        `adb reboot` fixes most of it, because nothing is ever deleted.
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      options:
+        - A shell script (scripts/*.sh)
+        - A PowerShell script (scripts/*.ps1)
+        - A Python tool (tools/*.py)
+        - The Android app
+        - A coding assistant following PROMPT.md
+    validations:
+      required: true
+
+  - type: input
+    id: phone
+    attributes:
+      label: Phone
+      placeholder: "vivo V2250, Android 15, Funtouch PD2283CF_EX_A_15.2.21.0.W20"
+    validations:
+      required: true
+
+  - type: input
+    id: computer
+    attributes:
+      label: Computer
+      description: Leave blank if you were using the Android app.
+      placeholder: "Windows 11, Python 3.12, PowerShell 5.1"
+    validations:
+      required: false
+
+  - type: textarea
+    id: command
+    attributes:
+      label: What did you run?
+      render: shell
+      placeholder: bash scripts/debloat.sh backups/<session>/plan.txt --dry-run
+    validations:
+      required: true
+
+  - type: textarea
+    id: output
+    attributes:
+      label: What happened?
+      description: >
+        Paste the output. The session log at `backups/<session>/debloat.log`
+        holds the phone's full reply, including the part the screen shortens.
+      render: text
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect instead?
+    validations:
+      required: false
+
+  - type: markdown
+    attributes:
+      value: >
+        **Before you paste:** a session directory holds package names, counts
+        and your device serial. It holds no messages, contacts or credentials —
+        but a package list does say which apps you have installed. Remove
+        anything you would rather not publish.
