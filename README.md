@@ -4,8 +4,9 @@
 
 <p align="center">
   <b>Your phone, minus the bloat.</b><br>
-  Strip the ads, trackers, telemetry and preinstalled junk from any Android phone over USB or Wi-Fi,
-  with an AI coding assistant doing the work.<br>
+  Strip the ads, trackers, telemetry and preinstalled junk from any Android phone.<br>
+  <b>Now Shizuku compatible</b> — run it on the phone itself with
+  <a href="CleanYourMobile.apk">the app</a>, or from a computer over USB or Wi-Fi.<br>
   <b>No root. Nothing permanently deleted. One-line restore.</b>
 </p>
 
@@ -16,6 +17,8 @@
   <a href="https://github.com/0xgh0stri13y/Clean-Your-Mobile/issues"><img src="https://img.shields.io/github/issues/0xgh0stri13y/Clean-Your-Mobile?style=flat&cacheSeconds=1800&color=cfffcf&labelColor=15181e" alt="Issues"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/licence-MIT-cfffcf?style=flat&labelColor=15181e" alt="MIT licence"></a>
   <a href="#safety"><img src="https://img.shields.io/badge/root-not%20required-cfffcf?style=flat&labelColor=15181e" alt="No root required"></a>
+  <a href="#the-android-app"><img src="https://img.shields.io/badge/Shizuku-compatible-cfffcf?style=flat&labelColor=15181e" alt="Shizuku compatible"></a>
+  <a href="CleanYourMobile.apk"><img src="https://img.shields.io/badge/download-APK-cfffcf?style=flat&labelColor=15181e" alt="Download the APK"></a>
 </p>
 
 <p align="center">
@@ -118,7 +121,7 @@ brands and a real 32-package removal, which is where most of this project's bugs
 
 ```bash
 gradle -p android assembleDebug      # build only
-gradle -p android publishApkDebug    # build, then copy the APK to the repository root
+gradle -p android publishApkRelease  # build, then copy the signed APK to the root
 ```
 
 Needs JDK 17 and the Android SDK, platform 35 with build-tools 34 or newer. `database/` is read
@@ -128,10 +131,17 @@ from one level up; the build **fails** rather than producing an APK with no neve
 `scripts/lib.sh`. Never edit it by hand — run `python tools/sync_guard.py`, which checks that all
 four copies agree.
 
-> The published APK is a **debug build**, signed with Android's debug key. That is fine for
-> sideloading, but it cannot be upgraded over a release build later, and some people reasonably
-> decline to install debug APKs from the internet. Build it yourself if you would rather not
-> trust the committed one.
+The published APK is a **signed release build**. Its signing key is held outside the repository
+and never committed, so the certificate below identifies builds that actually came from here:
+
+```
+Signer certificate DN:  CN=0xgh0stri13y, OU=CleanYourMobile, O=CleanYourMobile
+SHA-256 digest:         bf068b12ebc1c7f97ecaa33f312b19f69f0f97b8d1bfc6f0a164561712ca7782
+```
+
+Check any copy you download with
+`apksigner verify --print-certs CleanYourMobile.apk`. A different digest is not this build.
+If you would rather not trust a binary at all, the build above reproduces it from source.
 
 **More:** [`android/README.md`](android/README.md).
 

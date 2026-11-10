@@ -13,9 +13,49 @@ android {
         versionName "0.1.0"
     }
 
+    // Release signing.
+    //
+    // The keystore and its password live OUTSIDE the repository, under
+    // ~/.cleanyourmobile-signing/ by default. Not merely gitignored: a
+    // .gitignore is one careless deletion away from being absent, and a leaked
+    // keystore lets anyone ship an update as you. Keeping it out of the working
+    // tree means no ignore rule has to hold for it to stay private.
+    //
+    // Override with -PcymSigningProps=<path> or a cymSigningProps entry in
+    // gradle.properties. If the file is absent the release build is left
+    // UNSIGNED rather than silently falling back to the debug key, which would
+    // produce an APK that looks official and is not.
+    def keystorePropsFile = file(
+        project.findProperty("cymSigningProps")
+            ?: "${System.properties['user.home']}/.cleanyourmobile-signing/keystore.properties"
+    )
+    def keystoreProps = new Properties()
+    if (keystorePropsFile.exists()) {
+        keystoreProps.load(new FileInputStream(keystorePropsFile))
+    }
+
+    signingConfigs {
+        release {
+            if (keystorePropsFile.exists()) {
+                storeFile file(keystoreProps["storeFile"])
+                storePassword keystoreProps["storePassword"]
+                keyAlias keystoreProps["keyAlias"]
+                keyPassword keystoreProps["keyPassword"]
+            }
+        }
+    }
+
     buildTypes {
+        debug {
+            // Lets a debug build sit alongside an installed release build.
+            applicationIdSuffix ".debug"
+            versionNameSuffix "-debug"
+        }
         release {
             minifyEnabled false
+            if (keystorePropsFile.exists()) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 
@@ -114,7 +154,7 @@ def cymPublishedApk = "CleanYourMobile.apk"
 //
 // This is the one APK that is deliberately committed; .gitignore excludes
 // every other *.apk, including everything under android/app/build/.
-androidComponents.onVariants(androidComponents.selector().withBuildType("debug")) { variant ->
+androidComponents.onVariants(androidComponents.selector().all()) { variant ->
     def capped = variant.name.capitalize()
     tasks.register("publishApk${capped}") {
         description = "Copies the built APK to the repository root as ${cymPublishedApk}."

@@ -774,11 +774,11 @@
     {
       "id": "com.google.ar.core",
       "brand": "google",
-      "category": "bloatware",
+      "category": "google",
       "safety": "Advanced",
       "name": "Google AR Core",
       "description": "Augmented reality framework",
-      "if_removed": "Third-party AR features stop working: measuring apps, furniture preview, AR modes in games. Nothing else is affected."
+      "if_removed": "Third-party AR features stop working: measuring apps, furniture preview, AR modes in games. It is a runtime other apps load rather than an app you open, so the loss shows up inside those apps rather than as a missing icon. Users have reported the phone behaving better after putting it back."
     },
     {
       "id": "com.google.ar.lens",
