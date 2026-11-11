@@ -109,6 +109,7 @@ restore record live in these scripts; an improvised loop has none of them, and r
 | Install adb | `scripts/setup_adb.sh` / `.ps1` |
 | Connect | `scripts/connect.sh` / `.ps1` |
 | Measure | `scripts/snapshot.sh` / `.ps1` (`before` / `after`) |
+| Look up one package | `python tools/explain.py <pkg>` (no phone needed; use it for rule 3) |
 | Scan and plan | `python tools/scan.py --plan` |
 | Remove | `scripts/debloat.sh` / `.ps1` (with `--dry-run` first, always) |
 | Restore | `scripts/restore.sh` / `.ps1` |
