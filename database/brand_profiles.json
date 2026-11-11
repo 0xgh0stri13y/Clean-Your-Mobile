@@ -193,11 +193,13 @@
       "os_name": "ColorOS",
       "known_models": [
         "Oppo A",
+        "Oppo A3x",
         "Oppo F",
+        "Oppo K",
         "Oppo Reno",
         "Oppo Find"
       ],
-      "special_notes": "Oppo shares software with OnePlus and Realme (all under BBK Electronics). HeyTap is their shared cloud/app ecosystem. Finshell Pay is an Oppo-specific payment bloat.",
+      "special_notes": "Oppo shares software with OnePlus and Realme (all under BBK Electronics). HeyTap is their shared cloud/app ecosystem. Finshell Pay is an Oppo-specific payment bloat. On ColorOS 14 several HeyTap-era apps moved to com.oplus ids (com.oplus.themestore, com.oplus.ocloud, com.oplus.account), so an older list reports them as unknown. MediaTek-based models such as the A3x carry com.mediatek packages, including the IMS service that VoLTE and Wi-Fi calling depend on; those are on the never-touch list. Regional builds often preload Facebook, Netflix, shopping apps and games as regular apps rather than system apps; this project leaves those alone, and they uninstall from the home screen like any other app.",
       "common_safe_removals": [
         "HeyTap App Market",
         "HeyTap Cloud",

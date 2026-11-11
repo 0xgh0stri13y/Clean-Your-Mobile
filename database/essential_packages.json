@@ -23,7 +23,7 @@
       "setup wizard",
       "permission management"
     ],
-    "total_entries": 291
+    "total_entries": 296
   },
   "universal": [
     "android",
@@ -150,6 +150,13 @@
     "com.huawei.message",
     "com.huawei.securitymgr",
     "com.huawei.systemserver"
+  ],
+  "mediatek": [
+    "com.mediatek",
+    "com.mediatek.atci.service",
+    "com.mediatek.gbaservice",
+    "com.mediatek.ims",
+    "vendor.mediatek.iwlanservice"
   ],
   "motorola": [
     "com.android.incallui",

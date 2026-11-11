@@ -3,10 +3,10 @@
     "schema": "https://raw.githubusercontent.com/0xgh0stri13y/Clean-Your-Mobile/main/database/schema/debloat_db.schema.json",
     "schema_version": "1.0.0",
     "version": "1.0.0",
-    "last_updated": "2026-11-06",
+    "last_updated": "2026-11-12",
     "licence": "MIT",
-    "total_packages": 518,
-    "distinct_packages": 505,
+    "total_packages": 550,
+    "distinct_packages": 537,
     "sources": [
       "Universal Android Debloater (UAD-ng)",
       "MuntashirAkon/android-debloat-list",
@@ -4694,6 +4694,294 @@
       "name": "SIM Activate Service",
       "description": "Carrier SIM activation helper for China builds",
       "if_removed": "Nothing on a normal SIM. Do not remove if your carrier required an activation step."
+    },
+    {
+      "id": "com.coloros.gallery3d",
+      "brand": "oppo",
+      "category": "duplicate",
+      "safety": "Advanced",
+      "name": "Gallery",
+      "description": "OPPO's photo and video gallery",
+      "if_removed": "The Gallery app disappears. Your photos stay on the phone, and Google Photos or any gallery app from the Play Store shows them."
+    },
+    {
+      "id": "com.oplus.themestore",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Theme Store",
+      "description": "Themes, fonts, wallpapers and always-on-display styles, sold through an OPPO account",
+      "if_removed": "The Theme Store is gone and themes or fonts bought there can no longer be changed. The current look stays."
+    },
+    {
+      "id": "com.oplus.ocloud",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Expert",
+      "name": "OPPO Cloud",
+      "description": "Backs up and syncs contacts, notes, photos and settings to OPPO's cloud",
+      "if_removed": "Cloud backup and sync to OPPO's servers stop. Nothing already uploaded is deleted, and Google backup is unaffected. Turn sync off in Settings first so nothing is left half-synced."
+    },
+    {
+      "id": "com.oplus.account",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Expert",
+      "name": "OPPO Account",
+      "description": "Sign-in for the OPPO (HeyTap) account that the Theme Store, Cloud, Clone Phone and Multi-Screen Connect use",
+      "if_removed": "Signing in to an OPPO account stops, and every feature that needs it stops with it. Google accounts are unaffected."
+    },
+    {
+      "id": "com.oplus.member",
+      "brand": "oppo",
+      "category": "bloatware",
+      "safety": "Recommended",
+      "name": "OPPO Membership",
+      "description": "The membership and rewards app for OPPO accounts",
+      "if_removed": "The membership app is gone. Your OPPO account and the phone's warranty are unaffected."
+    },
+    {
+      "id": "com.oplus.vip",
+      "brand": "oppo",
+      "category": "bloatware",
+      "safety": "Advanced",
+      "name": "My OPPO (membership service)",
+      "description": "Background service behind OPPO membership benefits and the My OPPO app",
+      "if_removed": "Membership perks and the My OPPO app stop working. The OPPO account itself is unaffected."
+    },
+    {
+      "id": "com.heytap.store",
+      "brand": "oppo",
+      "category": "bloatware",
+      "safety": "Recommended",
+      "name": "OPPO Store",
+      "description": "Shop for OPPO phones and accessories",
+      "if_removed": "The OPPO Store app is gone. Nothing else changes."
+    },
+    {
+      "id": "com.oplus.obrain",
+      "brand": "oppo",
+      "category": "telemetry",
+      "safety": "Advanced",
+      "name": "OBrain",
+      "description": "Collects usage and system logs for OPPO's behaviour-learning services",
+      "if_removed": "Usage-pattern collection stops. Nothing you can see changes."
+    },
+    {
+      "id": "com.oplus.olc",
+      "brand": "oppo",
+      "category": "telemetry",
+      "safety": "Advanced",
+      "name": "OPLUS Log Core",
+      "description": "Collects system diagnostic logs for upload",
+      "if_removed": "Diagnostic log collection stops. Attaching logs to a Feedback report may no longer work."
+    },
+    {
+      "id": "com.oplus.interconnectcollectkit",
+      "brand": "oppo",
+      "category": "telemetry",
+      "safety": "Advanced",
+      "name": "Interconnect Collect Kit",
+      "description": "Collects logs for the cross-device connection services",
+      "if_removed": "Log collection for cross-device features stops. Nothing you can see changes."
+    },
+    {
+      "id": "com.oplus.postmanservice",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Remote Diagnosis",
+      "description": "Lets OPPO support run hardware checks on the phone remotely; holds camera, microphone and location permissions",
+      "if_removed": "OPPO customer support can no longer run remote diagnostics on the phone. Nothing else changes."
+    },
+    {
+      "id": "com.oplus.athena",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Expert",
+      "name": "Athena (background app manager)",
+      "description": "Kills background apps and runs the RAM expansion feature",
+      "if_removed": "The Close All button in Recents and RAM expansion stop working, and background apps are no longer killed aggressively. Battery use may rise."
+    },
+    {
+      "id": "com.oplus.synergy",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Multi-Screen Connect (HeySynergy)",
+      "description": "Screen mirroring and file drag-and-drop to a Windows PC or an OPPO Pad",
+      "if_removed": "Multi-Screen Connect and PC Connect stop. Chromecast and Android's own casting are unaffected."
+    },
+    {
+      "id": "com.oplus.onet",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "ONet (nearby OPPO devices)",
+      "description": "Finds nearby OPPO devices for Multi-Screen Connect and sharing",
+      "if_removed": "Nearby OPPO devices stop being discovered for Multi-Screen Connect. Bluetooth and Wi-Fi themselves are unaffected."
+    },
+    {
+      "id": "com.oplus.ndsf",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Device Connection Security Service",
+      "description": "Verifies the OPPO account when OPPO devices connect to each other; has internet access",
+      "if_removed": "Automatic connection between OPPO devices signed in to the same account stops. Nothing else changes."
+    },
+    {
+      "id": "com.oplus.callrecorder",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Call Recorder",
+      "description": "The record button in the stock dialer during a call",
+      "if_removed": "The call-recording button disappears. Calls themselves are unaffected."
+    },
+    {
+      "id": "com.oplus.gesture",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Expert",
+      "name": "Gestures and Motions",
+      "description": "Screen-off gestures and motion gestures such as raise to wake and flip to mute",
+      "if_removed": "Screen-off gestures, raise to wake and flip to mute stop. Navigation gestures are unaffected."
+    },
+    {
+      "id": "com.coloros.securepay",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Payment Protection",
+      "description": "The Payment Protection check in Settings that scans payment apps and the network they use",
+      "if_removed": "The Payment Protection screen in Settings stops working. Banking and UPI apps run as before."
+    },
+    {
+      "id": "com.coloros.karaoke",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Karaoke",
+      "description": "Routes your voice to wired earphones in singing apps",
+      "if_removed": "The karaoke audio mode in singing apps stops. Normal audio is unaffected."
+    },
+    {
+      "id": "com.coloros.alarmclock",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Expert",
+      "name": "Clock",
+      "description": "Alarms, timers, stopwatch and world clock",
+      "if_removed": "Every alarm stops ringing, and the timer and stopwatch go with it. Install another clock app and set your alarms in it before removing this."
+    },
+    {
+      "id": "com.coloros.musiclink",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Music Party",
+      "description": "Plays music in sync across several OPPO phones",
+      "if_removed": "Music Party stops. Normal playback is unaffected."
+    },
+    {
+      "id": "com.oplus.pay",
+      "brand": "oppo",
+      "category": "bloatware",
+      "safety": "Advanced",
+      "name": "OPPO Pay (KeKePay)",
+      "description": "Billing for purchases inside the Theme Store and other OPPO apps",
+      "if_removed": "Purchases billed through OPPO Pay stop. Google Pay and UPI apps are unaffected."
+    },
+    {
+      "id": "com.oplus.smartengine",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Expert",
+      "name": "Smart Engine",
+      "description": "Renders the cards and widgets used by Smart Assistant and the Shelf",
+      "if_removed": "Some home-screen cards and widgets stop loading. Remove only if Smart Assistant is already gone."
+    },
+    {
+      "id": "com.tencent.soter.soterserver",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Tencent SOTER",
+      "description": "Fingerprint authentication service for WeChat Pay",
+      "if_removed": "Fingerprint payment in WeChat stops. Fingerprint unlock and every other app are unaffected."
+    },
+    {
+      "id": "com.wapi.wapicertmanager",
+      "brand": "oppo",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "WAPI Certificate Manager",
+      "description": "Certificates for WAPI Wi-Fi networks, a standard used only in mainland China",
+      "if_removed": "WAPI networks can no longer be joined with a certificate. Ordinary Wi-Fi is unaffected."
+    },
+    {
+      "id": "android.autoinstalls.config.oppo",
+      "brand": "oppo",
+      "category": "bloatware",
+      "safety": "Recommended",
+      "name": "Play Auto Installs config",
+      "description": "The list of partner apps the Play Store installs during first setup",
+      "if_removed": "Nothing changes after setup is complete. The partner apps it already installed stay until you remove them yourself."
+    },
+    {
+      "id": "com.debug.loggerui",
+      "brand": "universal",
+      "category": "telemetry",
+      "safety": "Advanced",
+      "name": "Debug Logger UI (MediaTek)",
+      "description": "MediaTek's modem, network and graphics log capture tool",
+      "if_removed": "The engineering log tool is gone. Nothing an owner uses changes."
+    },
+    {
+      "id": "com.mediatek.engineermode",
+      "brand": "universal",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "MediaTek Engineer Mode",
+      "description": "The hidden engineering menu reached by a dial code",
+      "if_removed": "The engineering menu stops opening. Nothing else changes."
+    },
+    {
+      "id": "com.android.fmradio",
+      "brand": "universal",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "FM Radio",
+      "description": "The built-in FM radio, which uses wired earphones as the aerial",
+      "if_removed": "The FM Radio app is gone and no app from a store can replace it. Keep it if you listen to the radio."
+    },
+    {
+      "id": "com.android.traceur",
+      "brand": "universal",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "System Tracing",
+      "description": "The developer tool under Developer options that records a system trace",
+      "if_removed": "System Tracing disappears from Developer options. Only developers use it."
+    },
+    {
+      "id": "com.microsoftsdk.crossdeviceservicebroker",
+      "brand": "universal",
+      "category": "partner",
+      "safety": "Advanced",
+      "name": "Microsoft Cross Device Service",
+      "description": "The Link to Windows pairing offered during setup",
+      "if_removed": "Link to Windows pairing from Settings stops. The Phone Link app from the Play Store still works on its own."
+    },
+    {
+      "id": "com.google.ambient.streaming",
+      "brand": "google",
+      "category": "oem_feature",
+      "safety": "Advanced",
+      "name": "Cross-device app streaming",
+      "description": "Streams the phone's apps to a Chromebook",
+      "if_removed": "Streaming phone apps to a Chromebook stops. Nothing else changes."
     }
   ]
 }
