@@ -111,6 +111,13 @@ object ShizukuOps {
     fun explainFailure(reply: String): String = when {
         reply.contains("SecurityException") && reply.contains("no root permission") ->
             "blocked by the vendor ROM (would need root, which this app will not use)"
+        // ColorOS, realme UI and OxygenOS refuse a disable with "Permission
+        // Denial: attempt to change component state"; some ROMs word it "Shell
+        // cannot change component state". Same wall either way, and it used to
+        // fall through and show a raw Java exception.
+        reply.contains("change component state") ->
+            "the ROM will not let a shell change this package - vendor-protected, " +
+                "and no tool gets past it without root"
         reply.contains("DELETE_FAILED_INTERNAL_ERROR") ->
             "the ROM refused the uninstall - try disable instead"
         reply.contains("DELETE_FAILED_DEVICE_POLICY_MANAGER") ->

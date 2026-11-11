@@ -191,6 +191,13 @@ function Get-FailureExplanation([string]$Reply) {
     if ($Reply -match "SecurityException" -and $Reply -match "no root permission") {
         return "blocked by the vendor ROM (would need root, which this project will not use)"
     }
+    if ($Reply -match "change component state") {
+        # ColorOS, realme UI and OxygenOS refuse a disable with "Permission
+        # Denial: attempt to change component state"; some ROMs word it "Shell
+        # cannot change component state". Same wall either way, and it used to
+        # fall through and print a raw Java exception.
+        return "the ROM will not let a shell change this package - vendor-protected, and no tool gets past it without root"
+    }
     if ($Reply -match "DELETE_FAILED_INTERNAL_ERROR") {
         return "ROM refused the uninstall - try -Disable, or check Settings > Security > Device admin apps"
     }

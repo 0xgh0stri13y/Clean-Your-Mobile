@@ -227,6 +227,12 @@ explain_failure() { # turn a pm error into something a person can act on
     case "$reply" in
         *"SecurityException"*"no root permission"*)
             printf 'blocked by the vendor ROM (would need root, which this project will not use)' ;;
+        *"change component state"*)
+            # ColorOS, realme UI and OxygenOS refuse a disable with
+            # "Permission Denial: attempt to change component state"; some ROMs
+            # word it "Shell cannot change component state". Same wall either
+            # way, and it used to fall through and print a raw Java exception.
+            printf 'the ROM will not let a shell change this package - vendor-protected, and no tool gets past it without root' ;;
         *"DELETE_FAILED_INTERNAL_ERROR"*)
             printf 'ROM refused the uninstall - try --disable, or check Settings > Security > Device admin apps' ;;
         *"DELETE_FAILED_DEVICE_POLICY_MANAGER"*)

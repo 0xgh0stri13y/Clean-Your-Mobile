@@ -111,6 +111,7 @@ restore record live in these scripts; an improvised loop has none of them, and r
 | Measure | `scripts/snapshot.sh` / `.ps1` (`before` / `after`) |
 | Look up one package | `python tools/explain.py <pkg>` (no phone needed; use it for rule 3) |
 | Scan and plan | `python tools/scan.py --plan` |
+| Reuse a plan on another phone | `python tools/preset.py save` / `apply` (re-guards every package; never bypasses rule 1) |
 | Remove | `scripts/debloat.sh` / `.ps1` (with `--dry-run` first, always) |
 | Restore | `scripts/restore.sh` / `.ps1` |
 | Report | `python tools/report.py` |

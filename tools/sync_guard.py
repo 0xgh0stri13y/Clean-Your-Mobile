@@ -68,6 +68,65 @@ def py_alternatives() -> list[str]:
     return re.findall(r'r"([^"]*)"', block.group(1))
 
 
+PRESET_PY = ROOT / "tools" / "preset.py"
+_PRESET_KT_REL = Path("app/src/main/java/com/cleanyourmobile/Preset.kt")
+PRESET_KT = next(
+    (base / _PRESET_KT_REL for base in _ANDROID_CANDIDATES
+     if base and (base / _PRESET_KT_REL).is_file()),
+    ROOT / "android" / _PRESET_KT_REL,
+)
+
+
+def check_preset_pattern() -> list[str]:
+    """The preset package-name check, duplicated in Python and Kotlin.
+
+    Returns the problems found. A missing file is not a problem: a checkout
+    without the Android module, or without preset.py, is legitimate.
+    """
+    if not PRESET_PY.is_file():
+        return []
+
+    py_text = PRESET_PY.read_text(encoding="utf-8")
+    m = re.search(r'^PKG_RE\s*=\s*re\.compile\(r"(.+?)"\)\s*$', py_text, re.M)
+    if not m:
+        return ["tools/preset.py: could not find PKG_RE"]
+    want = m.group(1)
+
+    caps = {}
+    for key in ("MAX_PKG_LEN", "MAX_PACKAGES"):
+        c = re.search(rf"^{key}\s*=\s*(\d+)\s*$", py_text, re.M)
+        if not c:
+            return [f"tools/preset.py: could not find {key}"]
+        caps[key] = c.group(1)
+
+    if not PRESET_KT.is_file():
+        print(" Preset.kt       : absent (the Android app is not beside this checkout)")
+        return []
+
+    kt_text = PRESET_KT.read_text(encoding="utf-8")
+    k = re.search(r'PACKAGE_PATTERN_SOURCE\s*=\s*"""(.+?)"""', kt_text, re.S)
+    if not k:
+        return [f"{PRESET_KT}: could not find PACKAGE_PATTERN_SOURCE"]
+
+    problems = []
+    if k.group(1) != want:
+        problems.append(
+            f"{PRESET_KT}: package pattern differs from tools/preset.py"
+        )
+    for key, value in caps.items():
+        kt_key = {"MAX_PKG_LEN": "MAX_PKG_LEN", "MAX_PACKAGES": "MAX_PACKAGES"}[key]
+        c = re.search(rf"const val {kt_key}\s*=\s*(\d+)", kt_text)
+        if not c:
+            problems.append(f"{PRESET_KT}: could not find {kt_key}")
+        elif c.group(1) != value:
+            problems.append(
+                f"{PRESET_KT}: {kt_key} is {c.group(1)}, tools/preset.py says {value}"
+            )
+    if not problems:
+        print(" Preset.kt       : matches (package-name check and caps)")
+    return problems
+
+
 def branches(pattern: str) -> list[str]:
     return pattern.strip("()").split("|")
 
@@ -132,14 +191,23 @@ def main() -> int:
         else:
             print(f" tools/cym.py    : matches ({len(py)} branches)")
 
+    # --- the preset format's package-name check -----------------------------
+    # Second duplicated pattern in the project, for the same reason: an
+    # imported preset is untrusted input that reaches a privileged pm call, and
+    # the phone validates it without asking a computer. tools/preset.py is the
+    # source of truth; android/.../Preset.kt must agree.
+    problems.extend(check_preset_pattern())
+
     print()
     if problems:
         for p in problems:
             print(f" MISMATCH  {p}")
         print()
         if not args.fix:
-            print(" Run with --fix to rewrite the PowerShell and Kotlin copies.")
-            print(" tools/cym.py is a list and must be edited by hand.")
+            print(" Run with --fix to rewrite the PowerShell and Kotlin copies")
+            print(" of the GUARD pattern. tools/cym.py is a list and must be")
+            print(" edited by hand, and so must Preset.kt's copy of the preset")
+            print(" package-name check - --fix does not touch either.")
         return 1
     print(" All copies of the guard pattern agree.")
     return 0

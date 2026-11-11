@@ -100,6 +100,8 @@ computer.
 | **Refuses what it must** | The same three layers, and `Guard.kt` is a fourth copy of the pattern generated from `scripts/lib.sh`. On a OnePlus 10 Pro it holds back 112 packages. |
 | **Backs up first** | A full snapshot of the phone before the first change, plus a restore record written before the first package comes off and an exportable text file of the undo commands. |
 | **Disables, never deletes** | `pm disable-user --user 0`. **Restore all** switches everything back on. |
+| **Shows what it cannot rate** | A package the database has no entry for is listed under **Unrated** rather than quietly left out, which is what used to happen. It is shown and never offered: an unrated package is evidence for a human, not a verdict. |
+| **Presets** | **Export preset** saves what you actually switched off as a portable JSON profile; **Import preset** reads one from a file or the clipboard, re-checks every package against the database and the guard, and then only ticks the boxes. Nothing is applied by an import. The format is the same one [`tools/preset.py`](tools/preset.py) reads, so a profile moves between a phone and a computer either way. |
 | **Light or dark** | True `#000000` OLED black or a warm light theme, with a toggle under **Appearance**. Every colour pair passes the 4.5:1 contrast requirement. |
 
 ### What is verified, and what is not
@@ -113,6 +115,7 @@ Tested on a OnePlus 10 Pro (NE2213), Android 16, OxygenOS 16.0.3:
 | The privileged disable (`enabled 0 → 3`) and restore (`3 → 1`) | The three-consecutive-failure abort |
 | The backup snapshot and the exported undo file | The between-batch health check |
 | The light and dark themes, search, filters, selection | Any phone other than the one above |
+| | Preset export and import, and the **Unrated** list — they compile and the validation is covered by its command-line twin, but neither has been run on a phone yet |
 
 The command-line tools are the better-tested path by a wide margin: they have been run against two
 brands and a real 32-package removal, which is where most of this project's bugs were found.
@@ -230,6 +233,7 @@ python tools/report.py                    # report.md, report.json, report.txt
 | [`scripts/snapshot.sh`](scripts/snapshot.sh) | Measures packages, RAM, storage, battery, processes, services and permission holders into one session directory, as readable text and as JSON. |
 | [`tools/explain.py`](tools/explain.py) | Looks up a package name with no phone attached: what it is, what you lose if it goes, whether the guard refuses it and why, and the command that undoes each change. `--search` explores by keyword, `--json` feeds other tools. |
 | [`tools/scan.py`](tools/scan.py) | Reads the phone, detects the brand, matches all 505 database entries, and writes a plan with each line's consequence beside it. `--from-list` scores a saved package list with no phone attached. |
+| [`tools/preset.py`](tools/preset.py) | Saves a curated list as a named, portable profile: apply it to a second phone, pull it back after a factory reset, export it as JSON, share it. It stores package names only and resolves every rating from the database each time, so a profile never carries stale ratings. On import and on apply, every package goes back through the guard, and a file with a malformed package name is rejected whole rather than applied in part. |
 | [`scripts/debloat.sh`](scripts/debloat.sh) | Applies a plan: refuses anything protected, batches of five, a health check between batches, stops after three consecutive failures, verifies each removal, and writes the restore record before the first one. |
 | [`scripts/restore.sh`](scripts/restore.sh) | Puts a session back, all of it or one package or every session on record, and verifies each one. |
 | [`tools/report.py`](tools/report.py) | Compares the two snapshots and the two package lists. Spots packages that came back on their own, and says which numbers are real. |
@@ -754,6 +758,7 @@ clean-your-mobile/
 ├── tools/                        # cross-platform Python, standard library only
 │   ├── cym.py                    # shared: adb, database, sessions
 │   ├── explain.py                # look up one package, no phone needed
+│   ├── preset.py                 # portable, shareable removal profiles
 │   ├── scan.py                   # scan and build a plan
 │   ├── report.py                 # before and after
 │   ├── check.py                  # what a system update put back

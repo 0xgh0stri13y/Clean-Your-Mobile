@@ -36,5 +36,10 @@ enum class Filter(val label: String) {
     HIGH_IMPACT("Ads & tracking"),
     ALL("Everything"),
     KEPT("Protected"),
+    // Installed, but the database has no entry for it. These used to be left
+    // out of the list altogether, which on a ColorOS/realme UI/OxygenOS phone
+    // silently hid a large slice of what is actually installed and read as
+    // "the app does not detect my apps". They are shown, never offered.
+    UNRATED("Unrated"),
     ;
 }

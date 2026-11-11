@@ -1,7 +1,10 @@
 package com.cleanyourmobile
 
+import android.content.ClipboardManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
@@ -14,6 +17,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.FileProvider
@@ -42,6 +46,8 @@ class MainActivity : AppCompatActivity() {
         val blockedBecause: String?,
         val alreadyOff: Boolean,
         var selected: Boolean = false,
+        /** Installed but absent from the database: shown, never offered. */
+        val unrated: Boolean = false,
     ) {
         val actionable: Boolean get() = blockedBecause == null && !alreadyOff
     }
@@ -194,6 +200,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Reflect a filter change made in code - importing a preset switches to
+     * "Everything" so the selection is visible - in the chip row, which
+     * otherwise keeps showing the old one as checked.
+     */
+    private fun syncFilterChips() {
+        val values = Filter.values()
+        for (i in 0 until filters.childCount) {
+            val chip = filters.getChildAt(i) as? Chip ?: continue
+            if (i < values.size) chip.isChecked = values[i] == filter
+        }
+    }
+
     // ----------------------------------------------------------------- scan --
 
     private fun liveState(): Guard.LiveState {
@@ -216,6 +235,7 @@ class MainActivity : AppCompatActivity() {
         var recognised = 0
         var blocked = 0
         var off = 0
+        var unrated = 0
 
         for (app in installed) {
             val id = app.packageName
@@ -224,7 +244,35 @@ class MainActivity : AppCompatActivity() {
                 // Not in the database, but the never-touch list still covers it.
                 // Counting these as "unknown" made the guard look far less
                 // active than it is. Same fix as the one in tools/scan.py.
-                if (db.essentials.contains(id)) blocked++
+                if (db.essentials.contains(id)) {
+                    blocked++
+                    continue
+                }
+                // Previously this just `continue`d, so an installed package the
+                // database did not know never appeared anywhere in the app. On
+                // an oplus phone that is a large slice of what is installed,
+                // and it read as the app failing to detect anything. Show it,
+                // marked unrated, and never offer it: an unrated package is
+                // evidence for a human, not a verdict.
+                unrated++
+                all.add(
+                    Row(
+                        id = id,
+                        entry = Db.Pkg(
+                            id = id,
+                            brand = "",
+                            category = "unknown",
+                            safety = "Unrated",
+                            name = id,
+                            description = "",
+                            ifRemoved = "",
+                        ),
+                        priority = Priority.LOW,
+                        blockedBecause = "not in the database",
+                        alreadyOff = !app.enabled,
+                        unrated = true,
+                    )
+                )
                 continue
             }
             recognised++
@@ -252,7 +300,8 @@ class MainActivity : AppCompatActivity() {
         }
 
         summary.text = installed.size.toString() + " installed · " + recognised +
-            " recognised · " + blocked + " protected · " + off + " already off"
+            " recognised · " + blocked + " protected · " + unrated + " unrated · " +
+            off + " already off"
 
         applyFilter()
     }
@@ -265,7 +314,10 @@ class MainActivity : AppCompatActivity() {
                     row.entry.safety == "Recommended"
                 Filter.HIGH_IMPACT -> row.actionable && row.priority == Priority.HIGH
                 Filter.ALL -> row.actionable
-                Filter.KEPT -> !row.actionable
+                // Unrated rows are non-actionable too, so keep them out of
+                // "Protected" or they would bury the genuinely protected ones.
+                Filter.KEPT -> !row.actionable && !row.unrated
+                Filter.UNRATED -> row.unrated
             }
             if (!passesFilter) continue
             if (query.isNotEmpty() &&
@@ -438,7 +490,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreateOptionsMenu(menu: android.view.Menu): Boolean {
         menu.add(0, 1, 0, "Restore all")
         menu.add(0, 2, 0, "Export backup")
-        menu.add(0, 3, 0, "Appearance")
+        menu.add(0, 3, 0, "Export preset")
+        menu.add(0, 4, 0, "Import preset")
+        menu.add(0, 5, 0, "Appearance")
         return true
     }
 
@@ -446,7 +500,9 @@ class MainActivity : AppCompatActivity() {
         when (item.itemId) {
             1 -> confirmRestoreAll()
             2 -> exportBackup()
-            3 -> chooseTheme()
+            3 -> exportPreset()
+            4 -> chooseImportSource()
+            5 -> chooseTheme()
             else -> return super.onOptionsItemSelected(item)
         }
         return true
@@ -497,6 +553,186 @@ class MainActivity : AppCompatActivity() {
             }
             .setNegativeButton("Close", null)
             .show()
+    }
+
+    // ------------------------------------------------------------- presets ---
+
+    /**
+     * The file picker for an imported preset. Registered as a property so it
+     * exists before the activity is started, which is what the contract API
+     * requires.
+     */
+    private val pickPreset = registerForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri: Uri? ->
+        if (uri == null) return@registerForActivityResult
+        val text = try {
+            contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }
+        } catch (t: Throwable) {
+            null
+        }
+        if (text.isNullOrBlank()) {
+            Toast.makeText(this, "Could not read that file", Toast.LENGTH_LONG).show()
+        } else {
+            handlePresetText(text)
+        }
+    }
+
+    /**
+     * Share what this app actually switched off, as a preset another phone or
+     * the command line tools can read.
+     */
+    private fun exportPreset() {
+        val packages = backup.stillOff()
+        if (packages.isEmpty()) {
+            Toast.makeText(
+                this, "Nothing is switched off yet - there is nothing to save",
+                Toast.LENGTH_LONG,
+            ).show()
+            return
+        }
+        try {
+            val preset = Preset.build(
+                name = Build.MANUFACTURER + "-" + Build.MODEL,
+                packages = packages,
+                description = "Switched off with Clean Your Mobile on " +
+                    Build.MANUFACTURER + " " + Build.MODEL +
+                    ", Android " + Build.VERSION.RELEASE,
+                brand = brand.key,
+                mode = "disable",
+            )
+            val file = Preset.writeForShare(this, preset)
+            val uri = FileProvider.getUriForFile(this, packageName + ".files", file)
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "application/json"
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            startActivity(Intent.createChooser(send, "Export preset"))
+        } catch (t: Throwable) {
+            Toast.makeText(this, "Could not export: " + t.message, Toast.LENGTH_LONG).show()
+        }
+    }
+
+    private fun chooseImportSource() {
+        AlertDialog.Builder(this)
+            .setTitle("Import a preset")
+            .setItems(arrayOf("From a file", "From the clipboard")) { _, which ->
+                if (which == 0) {
+                    // Some providers mislabel .json, so accept anything and let
+                    // the parser be the judge.
+                    pickPreset.launch(arrayOf("*/*"))
+                } else {
+                    val clip = (getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager)
+                        .primaryClip
+                    val text = if (clip != null && clip.itemCount > 0) {
+                        clip.getItemAt(0).coerceToText(this).toString()
+                    } else {
+                        ""
+                    }
+                    if (text.isBlank()) {
+                        Toast.makeText(this, "The clipboard is empty", Toast.LENGTH_LONG).show()
+                    } else {
+                        handlePresetText(text)
+                    }
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    /**
+     * Parse, then explain, then tick boxes. Importing a preset never changes
+     * anything on the phone: it selects what the guard allows, and the normal
+     * guarded flow still has to be run deliberately afterwards.
+     */
+    private fun handlePresetText(text: String) {
+        when (val outcome = Preset.parse(text)) {
+            is Preset.Outcome.Refused -> AlertDialog.Builder(this)
+                .setTitle("Preset refused")
+                .setMessage(
+                    outcome.why + "\n\nNothing was imported and nothing on the phone " +
+                        "was touched."
+                )
+                .setPositiveButton("Close", null)
+                .show()
+
+            is Preset.Outcome.Ok -> showPresetPlan(outcome.preset)
+        }
+    }
+
+    private fun showPresetPlan(preset: Preset.Data) {
+        val installedApps = packageManager.getInstalledApplications(0)
+        val installed = installedApps.map { it.packageName }.toSet()
+        val disabled = installedApps.filter { !it.enabled }.map { it.packageName }.toSet()
+
+        val res = Preset.resolve(preset, db, liveState(), installed, disabled)
+
+        val sb = StringBuilder()
+        if (preset.description.isNotBlank()) sb.append(preset.description).append("\n\n")
+        sb.append(preset.packages.size).append(" packages in this preset.\n")
+
+        if (res.ready.isNotEmpty()) {
+            sb.append("\nWill be selected (").append(res.ready.size).append("):\n")
+            for (p in res.ready.take(20)) {
+                sb.append("  ").append(p.name.ifBlank { p.id })
+                    .append(" [").append(p.safety).append("]\n")
+            }
+            if (res.ready.size > 20) sb.append("  ... and ")
+                .append(res.ready.size - 20).append(" more\n")
+        }
+        if (res.refused.isNotEmpty()) {
+            sb.append("\nRefused by the guard (").append(res.refused.size)
+                .append(") - no flag overrides this:\n")
+            for ((id, why) in res.refused.take(10)) {
+                sb.append("  ").append(id).append(" - ").append(why).append("\n")
+            }
+            if (res.refused.size > 10) sb.append("  ... and ")
+                .append(res.refused.size - 10).append(" more\n")
+        }
+        if (res.readyUnknown.isNotEmpty()) {
+            sb.append("\nNot in the database (").append(res.readyUnknown.size)
+                .append(") - unrated, so not selected:\n")
+            for (id in res.readyUnknown.take(10)) sb.append("  ").append(id).append("\n")
+            if (res.readyUnknown.size > 10) sb.append("  ... and ")
+                .append(res.readyUnknown.size - 10).append(" more\n")
+        }
+        if (res.alreadyOff.isNotEmpty()) {
+            sb.append("\nAlready off: ").append(res.alreadyOff.size).append("\n")
+        }
+        if (res.notInstalled.isNotEmpty()) {
+            sb.append("\nNot on this phone: ").append(res.notInstalled.size)
+                .append(" - this preset came from a different model.\n")
+        }
+
+        val selectable = res.ready.map { it.id }.toSet()
+        val builder = AlertDialog.Builder(this)
+            .setTitle("Preset: " + preset.name)
+            .setMessage(sb.toString())
+            .setNegativeButton("Cancel", null)
+
+        if (selectable.isEmpty()) {
+            builder.setPositiveButton("Close", null)
+        } else {
+            builder.setPositiveButton("Select " + selectable.size) { _, _ ->
+                var ticked = 0
+                for (row in all) {
+                    if (row.actionable && selectable.contains(row.id)) {
+                        row.selected = true
+                        ticked++
+                    }
+                }
+                // Show them: the default filter would hide most of a preset.
+                filter = Filter.ALL
+                syncFilterChips()
+                applyFilter()
+                Toast.makeText(
+                    this, "Selected " + ticked + " app(s) - review, then switch off",
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
+        }
+        builder.show()
     }
 
     private fun exportBackup() {
@@ -583,6 +819,18 @@ class MainActivity : AppCompatActivity() {
             when {
                 row.alreadyOff -> {
                     holder.impact.text = "Already switched off."
+                    holder.check.isChecked = false
+                    holder.card.isEnabled = false
+                    holder.card.alpha = 0.5f
+                    holder.card.setOnClickListener(null)
+                }
+                row.unrated -> {
+                    // Honest wording: this one is not protected, it is simply
+                    // not rated. Saying "Protected" here would be a lie.
+                    holder.impact.text =
+                        "Not in the database - unrated. Nothing is known about what " +
+                            "removing it would cost, so it is not offered. Report it " +
+                            "and it can be rated."
                     holder.check.isChecked = false
                     holder.card.isEnabled = false
                     holder.card.alpha = 0.5f
