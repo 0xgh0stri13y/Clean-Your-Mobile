@@ -140,7 +140,7 @@ An unusual ROM will have packages no list has ever seen. All three implementatio
 anything whose *name* matches a protected category:
 
 ```
-^android$ · systemui · ^com\.android\.settings · telecom · telephony · dialer · incallui
+^android$ · ^oplus$ · systemui · ^com\.android\.settings · telecom · telephony · dialer · incallui
 \.mms · messaging · inputmethod · latin · keyboard · ^com\.android\.vending$
 ^com\.google\.android\.gms · ^com\.google\.android\.gsf · setupwizard · provision
 keystore · keychain · permissioncontroller · packageinstaller · networkstack

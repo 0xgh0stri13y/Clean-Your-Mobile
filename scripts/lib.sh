@@ -259,7 +259,8 @@ is_essential() {
 # OnePlus 10 Pro carries 30+ of these (com.oplus.framework.res.overlay,
 # com.oplus.gpudrivers.sm8450.api31, android.frameworkres.overlay and so on).
 # None is an app anyone installed, and removing one can cost you the display.
-PROTECTED_PATTERNS='(^android$|systemui|^com\.android\.settings|telecom|telephony|dialer|incallui|\.mms|messaging|inputmethod|latin|keyboard|^com\.android\.vending$|^com\.google\.android\.gms|^com\.google\.android\.gsf|setupwizard|provision|keystore|keychain|permissioncontroller|packageinstaller|networkstack|\.wifi|bluetooth|^com\.android\.camera|launcher|\.home$|overlay|\.rro\.|_rro$|frameworkres|gpudrivers|vulkan|\.resources$|^android\.auto_generated)'
+# `oplus` is the ColorOS framework resources package, the OEM twin of `android`.
+PROTECTED_PATTERNS='(^android$|^oplus$|systemui|^com\.android\.settings|telecom|telephony|dialer|incallui|\.mms|messaging|inputmethod|latin|keyboard|^com\.android\.vending$|^com\.google\.android\.gms|^com\.google\.android\.gsf|setupwizard|provision|keystore|keychain|permissioncontroller|packageinstaller|networkstack|\.wifi|bluetooth|^com\.android\.camera|launcher|\.home$|overlay|\.rro\.|_rro$|frameworkres|gpudrivers|vulkan|\.resources$|^android\.auto_generated)'
 
 is_protected_by_pattern() {
     printf '%s' "$1" | grep -qE "$PROTECTED_PATTERNS"

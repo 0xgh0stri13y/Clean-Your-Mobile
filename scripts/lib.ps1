@@ -259,7 +259,7 @@ function Test-Essential([string]$PackageId) {
 # The trailing group covers build-time infrastructure rather than apps: runtime
 # resource overlays, framework resources, GPU drivers and graphics layers.
 # Removing one of those can cost you the display.
-$script:ProtectedPattern = '(^android$|systemui|^com\.android\.settings|telecom|telephony|dialer|incallui|\.mms|messaging|inputmethod|latin|keyboard|^com\.android\.vending$|^com\.google\.android\.gms|^com\.google\.android\.gsf|setupwizard|provision|keystore|keychain|permissioncontroller|packageinstaller|networkstack|\.wifi|bluetooth|^com\.android\.camera|launcher|\.home$|overlay|\.rro\.|_rro$|frameworkres|gpudrivers|vulkan|\.resources$|^android\.auto_generated)'
+$script:ProtectedPattern = '(^android$|^oplus$|systemui|^com\.android\.settings|telecom|telephony|dialer|incallui|\.mms|messaging|inputmethod|latin|keyboard|^com\.android\.vending$|^com\.google\.android\.gms|^com\.google\.android\.gsf|setupwizard|provision|keystore|keychain|permissioncontroller|packageinstaller|networkstack|\.wifi|bluetooth|^com\.android\.camera|launcher|\.home$|overlay|\.rro\.|_rro$|frameworkres|gpudrivers|vulkan|\.resources$|^android\.auto_generated)'
 
 function Get-BlockReason([string]$PackageId) {
     if (Test-Essential $PackageId) { return "on the never-touch list" }
