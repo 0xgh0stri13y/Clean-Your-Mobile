@@ -233,7 +233,7 @@ python tools/report.py                    # report.md, report.json, report.txt
 | [`scripts/snapshot.sh`](scripts/snapshot.sh) | Measures packages, RAM, storage, battery, processes, services and permission holders into one session directory, as readable text and as JSON. |
 | [`tools/explain.py`](tools/explain.py) | Looks up a package name with no phone attached: what it is, what you lose if it goes, whether the guard refuses it and why, and the command that undoes each change. `--search` explores by keyword, `--json` feeds other tools. |
 | [`tools/scan.py`](tools/scan.py) | Reads the phone, detects the brand, matches all 505 database entries, and writes a plan with each line's consequence beside it. `--from-list` scores a saved package list with no phone attached. |
-| [`tools/preset.py`](tools/preset.py) | Saves a curated list as a named, portable profile: apply it to a second phone, pull it back after a factory reset, export it as JSON, share it. It stores package names only and resolves every rating from the database each time, so a profile never carries stale ratings. On import and on apply, every package goes back through the guard, and a file with a malformed package name is rejected whole rather than applied in part. |
+| [`tools/preset.py`](tools/preset.py) | Saves a curated list as a named, portable profile: apply it to a second phone, pull it back after a factory reset, export it as JSON, share it. It stores package names only and resolves every rating from the database each time, so a profile never carries stale ratings. On import and on apply, every package goes back through the guard, and a file with a malformed package name is rejected whole rather than applied in part. `--from-device` saves what a phone debloated by hand already has uninstalled, so there is finally a record of it. |
 | [`scripts/debloat.sh`](scripts/debloat.sh) | Applies a plan: refuses anything protected, batches of five, a health check between batches, stops after three consecutive failures, verifies each removal, and writes the restore record before the first one. |
 | [`scripts/restore.sh`](scripts/restore.sh) | Puts a session back, all of it or one package or every session on record, and verifies each one. |
 | [`tools/report.py`](tools/report.py) | Compares the two snapshots and the two package lists. Spots packages that came back on their own, and says which numbers are real. |
@@ -669,6 +669,25 @@ adb shell settings put global animator_duration_scale 0.5
 
 The before snapshot records your original values under **Animation scales**. The restore script
 does not revert these, because they are not package changes, so put them back by hand with `1.0`.
+
+</details>
+
+<details>
+<summary><b>I already debloated my phone by hand. Is there anything here for me?</b></summary>
+
+Yes. `pm list packages` does not list what you uninstalled, so a scan sees a clean phone and you
+have no record of what came off. `tools/scan.py` now prints an **Already removed** count, and
+
+```bash
+python tools/preset.py save my-phone --from-device
+python tools/preset.py show my-phone
+```
+
+turns those removals into a named preset: every system package uninstalled for your user, with
+the database's name and `if_removed` line beside each one, and the ones the database does not know
+marked as such. Apply it to a second phone with `preset.py apply my-phone --device`, or share it.
+Regular apps you uninstalled are left out, because they have no system copy and this project never
+touches them. Add `--include-disabled` to take the system apps you switched off as well.
 
 </details>
 

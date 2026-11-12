@@ -145,6 +145,12 @@ def main() -> int:
     installed_set = set(installed)
     disabled_set = set(disabled)
 
+    # System packages uninstalled for this user before this scan, by hand or
+    # with another tool. `pm list packages` does not list them.
+    already_removed: List[str] = []
+    if device is not None:
+        already_removed = sorted(set(adb.packages("-u", "-s")) - installed_set)
+
     if not args.as_json:
         hr()
         print(f" Installed packages : {len(installed)}")
@@ -156,6 +162,9 @@ def main() -> int:
                   f"  ({profile.get('os_name', '?')})")
         else:
             print(" Brand profile      : none matched, using universal entries only")
+        if already_removed:
+            print(f" Already removed    : {len(already_removed)}   (system apps uninstalled "
+                  f"for this user before now)")
         print(f" Plan level         : {args.level}")
         hr()
 
@@ -224,11 +233,13 @@ def main() -> int:
                 "disabled": len(disabled),
                 "matched": sum(len(v) for v in buckets.values()),
                 "unknown": len(unknown),
+                "already_removed": len(already_removed),
                 "planned": len(plan),
                 "blocked": len(blocked),
                 "regular_apps": len(user_apps),
                 **{s.lower(): len(v) for s, v in buckets.items()},
             },
+            "already_removed": already_removed,
             "plan": [p.__dict__ for p in plan],
             "blocked": [{"id": p, "reason": r} for p, r in blocked],
             "regular_apps_left_alone": sorted(p.id for p in regular),
@@ -308,6 +319,15 @@ def main() -> int:
         step(f"Every package not in the database: {len(unknown)}")
         for pid in unknown:
             print(f"    {pid}")
+
+    if already_removed:
+        print()
+        step(f"Already removed before this scan: {len(already_removed)}")
+        known = sum(1 for p in already_removed if db.get(p))
+        print(f"  {C.DIM}System apps uninstalled for this user earlier, by hand or with "
+              f"another tool; {known} of them are in the database. There is no restore")
+        print(f"  record for them. Keep one, and a profile you can reuse, with:")
+        print(f"    python tools/preset.py save <name> --from-device{C.RESET}")
 
     if profile.get("special_notes"):
         print()
