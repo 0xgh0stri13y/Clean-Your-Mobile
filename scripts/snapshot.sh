@@ -131,6 +131,7 @@ HOME_PKG="$(sh_ "cmd package resolve-activity --brief -a android.intent.action.M
 ANIM_WIN="$(sh_ "settings get global window_animation_scale"     | tr -d '\r\n')"
 ANIM_TRANS="$(sh_ "settings get global transition_animation_scale" | tr -d '\r\n')"
 ANIM_DUR="$(sh_ "settings get global animator_duration_scale"      | tr -d '\r\n')"
+ok "home ${HOME_PKG:-unknown}, animations ${ANIM_WIN:-null} / ${ANIM_TRANS:-null} / ${ANIM_DUR:-null}"
 
 # ------------------------------------------------------------ package list ----
 # Saved on both phases: the after list is what tools/report.py diffs against,

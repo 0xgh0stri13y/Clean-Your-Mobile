@@ -11,6 +11,7 @@ has to pass.
 Checks, in the order a mistake matters:
 
   error    a package on the never-touch list is not rated Unsafe
+  error    a package rated Unsafe is not on the never-touch list
   error    a missing or unknown safety rating, category or required field
   error    a package id that is not a plausible Android package name
   error    two rows for the same id and brand
@@ -108,6 +109,13 @@ def main() -> int:
                 row["safety"] = "Unsafe"
                 row["category"] = "essential"
                 fixes.append(f"{pid}: safety -> Unsafe, category -> essential")
+
+        # The reverse: the shell and PowerShell guards read only the never-touch
+        # list, so an Unsafe row missing from it would be refused by two tools
+        # and applied by the other two.
+        if safety == "Unsafe" and row.get("id") and row.get("id") not in essentials:
+            errors.append(f"{where}: rated Unsafe but not on the never-touch list - "
+                          f"scripts/debloat.sh and .ps1 would not refuse it")
 
         by_id_brand[(row.get("id"), row.get("brand"))] += 1
 

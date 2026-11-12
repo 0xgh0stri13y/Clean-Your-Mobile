@@ -126,6 +126,7 @@ if ($homeLines.Count -gt 0) { $homePkg = ($homeLines[-1] -split "/")[0].Trim() }
 $animWin   = (Invoke-Shell "settings get global window_animation_scale").Trim()
 $animTrans = (Invoke-Shell "settings get global transition_animation_scale").Trim()
 $animDur   = (Invoke-Shell "settings get global animator_duration_scale").Trim()
+Write-Ok ("home {0}, animations {1} / {2} / {3}" -f $homePkg, $animWin, $animTrans, $animDur)
 
 Write-Step "Saving package lists"
 $maps = @{
