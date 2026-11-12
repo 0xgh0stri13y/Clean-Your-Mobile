@@ -58,13 +58,13 @@ load_essentials
 # Blank lines and # comments are skipped. Duplicates are collapsed, keeping
 # the first occurrence, so a hand-edited plan cannot run a package twice.
 declare -a WANTED=()
-declare -A SEEN=()
+SEEN=$'\n'
 while IFS= read -r line || [ -n "$line" ]; do
     line="${line%%#*}"
     line="$(tr -d '\r' <<< "$line" | awk '{$1=$1};1')"
     [ -z "$line" ] && continue
-    [ -n "${SEEN[$line]:-}" ] && continue
-    SEEN[$line]=1
+    case "$SEEN" in *$'\n'"$line"$'\n'*) continue ;; esac
+    SEEN+="$line"$'\n'
     WANTED+=("$line")
 done < "$PLAN"
 

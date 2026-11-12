@@ -130,7 +130,7 @@ all)
     while IFS= read -r dir; do
         [ -z "$dir" ] && continue
         restore_session "$dir"; info ""; any=1
-    done < <(ls -1dt "$CYM_BACKUP_ROOT"/*/ 2>/dev/null | sed 's#/$##' | tac)
+    done < <(ls -1dtr "$CYM_BACKUP_ROOT"/*/ 2>/dev/null | sed 's#/$##')
     [ "$any" = 0 ] && die "No sessions found in $CYM_BACKUP_ROOT"
     ;;
 latest)
