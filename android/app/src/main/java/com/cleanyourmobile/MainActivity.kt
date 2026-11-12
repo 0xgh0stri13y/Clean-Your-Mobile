@@ -50,6 +50,14 @@ class MainActivity : AppCompatActivity() {
         val unrated: Boolean = false,
     ) {
         val actionable: Boolean get() = blockedBecause == null && !alreadyOff
+
+        /**
+         * Name and id, lowercased once at construction. The search filter used
+         * to lowercase both on every keystroke for every row, and listing
+         * unrated packages roughly tripled how many rows that is. Declared in
+         * the body rather than the constructor so it stays out of equals().
+         */
+        val searchKey: String = (entry.name + " " + id).lowercase()
     }
 
     private lateinit var db: Db
@@ -254,19 +262,46 @@ class MainActivity : AppCompatActivity() {
                 // and it read as the app failing to detect anything. Show it,
                 // marked unrated, and never offer it: an unrated package is
                 // evidence for a human, not a verdict.
+                //
+                // Run the guard on it even so. A good share of these are RRO
+                // overlays, framework resources and GPU drivers, which the
+                // protected-name pattern already refuses. Calling those
+                // "unrated" invited the user to report build infrastructure
+                // for rating, and left the Unrated list a worse worklist than
+                // it should be. Protected is protected; only what the guard
+                // would actually allow is genuinely waiting on a rating.
+                // These are rows now, so they belong in the "already off"
+                // count too. Leaving them out understated it.
+                if (!app.enabled) off++
+                val unknownReason = Guard.blockReason(id, db, live)
+                val syntheticEntry = Db.Pkg(
+                    id = id,
+                    brand = "",
+                    category = "unknown",
+                    safety = "Unrated",
+                    name = id,
+                    description = "",
+                    ifRemoved = "",
+                )
+                if (unknownReason != null) {
+                    blocked++
+                    all.add(
+                        Row(
+                            id = id,
+                            entry = syntheticEntry,
+                            priority = Priority.LOW,
+                            blockedBecause = unknownReason,
+                            alreadyOff = !app.enabled,
+                            unrated = false,
+                        )
+                    )
+                    continue
+                }
                 unrated++
                 all.add(
                     Row(
                         id = id,
-                        entry = Db.Pkg(
-                            id = id,
-                            brand = "",
-                            category = "unknown",
-                            safety = "Unrated",
-                            name = id,
-                            description = "",
-                            ifRemoved = "",
-                        ),
+                        entry = syntheticEntry,
                         priority = Priority.LOW,
                         blockedBecause = "not in the database",
                         alreadyOff = !app.enabled,
@@ -320,10 +355,7 @@ class MainActivity : AppCompatActivity() {
                 Filter.UNRATED -> row.unrated
             }
             if (!passesFilter) continue
-            if (query.isNotEmpty() &&
-                !row.entry.name.lowercase().contains(query) &&
-                !row.id.lowercase().contains(query)
-            ) continue
+            if (query.isNotEmpty() && !row.searchKey.contains(query)) continue
             shown.add(row)
         }
         adapter.notifyDataSetChanged()
@@ -754,6 +786,21 @@ class MainActivity : AppCompatActivity() {
     // --------------------------------------------------------------- adapter --
 
     private inner class Adapter : RecyclerView.Adapter<Adapter.Holder>() {
+
+        // Resolved once per adapter instead of once per badge per bind. Each of
+        // these was a resources or ContextCompat lookup inside the scroll path.
+        private val density = resources.displayMetrics.density
+        private val transparent = android.content.res.ColorStateList.valueOf(
+            android.graphics.Color.TRANSPARENT
+        )
+        private val tints = HashMap<Int, android.content.res.ColorStateList>()
+
+        private fun tint(res: Int): android.content.res.ColorStateList = tints.getOrPut(res) {
+            android.content.res.ColorStateList.valueOf(
+                androidx.core.content.ContextCompat.getColor(this@MainActivity, res)
+            )
+        }
+
         inner class Holder(view: View) : RecyclerView.ViewHolder(view) {
             val card: MaterialCardView = view.findViewById(R.id.card)
             val check: MaterialCheckBox = view.findViewById(R.id.check)
@@ -761,6 +808,15 @@ class MainActivity : AppCompatActivity() {
             val pkg: TextView = view.findViewById(R.id.pkg)
             val impact: TextView = view.findViewById(R.id.impact)
             val badges: ChipGroup = view.findViewById(R.id.badges)
+
+            // A row carries at most two badges: the safety rating, and the
+            // impact band when the row is actionable. They are built once here
+            // and re-labelled on bind. Building them inside onBindViewHolder
+            // meant constructing Material Chip views - attribute resolution,
+            // colour state lists, density maths - for every row that scrolled
+            // into view, which is the one thing a bind must not do.
+            val safetyChip: Chip = newBadge().also { badges.addView(it) }
+            val priorityChip: Chip = newBadge().also { badges.addView(it) }
         }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder =
@@ -773,24 +829,27 @@ class MainActivity : AppCompatActivity() {
          * label still says "High impact" or "Expert" in words, which is the
          * skill's colour-not-only accessibility rule.
          */
-        private fun badge(text: String, tint: Int): Chip = Chip(this@MainActivity).apply {
-            this.text = text
+        private fun newBadge(): Chip = Chip(this@MainActivity).apply {
             isClickable = false
             isCheckable = false
             // Inline labels, not tap targets: without this they render
             // at full 48dp touch-target height and dwarf the row.
             setEnsureMinTouchTargetSize(false)
-            chipMinHeight = resources.displayMetrics.density * 26f
-            chipStartPadding = resources.displayMetrics.density * 2f
-            chipEndPadding = resources.displayMetrics.density * 2f
+            chipMinHeight = density * 26f
+            chipStartPadding = density * 2f
+            chipEndPadding = density * 2f
+            chipStrokeWidth = density * 1f
             textSize = 11f
-            val colour = androidx.core.content.ContextCompat.getColor(context, tint)
-            chipStrokeWidth = resources.displayMetrics.density * 1f
-            chipStrokeColor = android.content.res.ColorStateList.valueOf(colour)
-            setTextColor(colour)
-            chipBackgroundColor = android.content.res.ColorStateList.valueOf(
-                android.graphics.Color.TRANSPARENT
-            )
+            chipBackgroundColor = transparent
+        }
+
+        /** Re-label an existing badge. No allocation beyond the text itself. */
+        private fun setBadge(chip: Chip, label: String, colourRes: Int) {
+            val colours = tint(colourRes)
+            chip.text = label
+            chip.chipStrokeColor = colours
+            chip.setTextColor(colours)
+            chip.visibility = View.VISIBLE
         }
 
         private fun safetyTint(safety: String): Int = when (safety) {
@@ -810,10 +869,11 @@ class MainActivity : AppCompatActivity() {
             holder.name.text = row.entry.name
             holder.pkg.text = row.id
 
-            holder.badges.removeAllViews()
-            holder.badges.addView(badge(row.entry.safety, safetyTint(row.entry.safety)))
+            setBadge(holder.safetyChip, row.entry.safety, safetyTint(row.entry.safety))
             if (row.actionable) {
-                holder.badges.addView(badge(row.priority.label, priorityTint(row.priority)))
+                setBadge(holder.priorityChip, row.priority.label, priorityTint(row.priority))
+            } else {
+                holder.priorityChip.visibility = View.GONE
             }
 
             when {
