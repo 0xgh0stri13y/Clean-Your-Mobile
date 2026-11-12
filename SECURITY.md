@@ -1,71 +1,41 @@
-# Security
+# Security policy
 
 ## Reporting a vulnerability
 
-Report it privately through the repository's **Security** tab ("Report a vulnerability"), not as a
-public issue.
+Report it privately through [Security > Report a vulnerability](https://github.com/0xgh0stri13y/Clean-Your-Mobile/security/advisories/new), not as a public issue. Say what the problem is, how to reproduce it, and what it lets someone do. You will get a reply, and the fix and the credit are made public once it ships.
 
-Please include what the problem is, how to reproduce it, and what it lets someone do. You will get
-an acknowledgement, and the fix and the credit will be public once it is out.
+Only the current `main` branch and the latest published APK are supported.
 
-## What counts as a vulnerability here
+## In scope
 
-This project runs commands against a phone the user owns, over a debug bridge the user enabled. The
-things that matter:
-
-| Report this | Because |
+| Report this | Why it matters |
 |---|---|
-| **A path to a removal that skips the never-touch list** | This is the one that matters most. Any route to `pm uninstall` or `pm disable-user` that does not pass through `block_reason` is a bug, whatever the surrounding conditions. |
-| **A command injected through a package name or plan file** | Package names end up in shell commands. A crafted name that escapes its context is a real finding. |
-| **A plan file or session directory that escapes its intended path** | Writing outside `backups/`, or reading a file the user did not name. |
-| **A restore record that is wrong or incomplete** | A removal recorded as something it was not, or not recorded at all, leaves a phone that cannot be put back. |
-| **Anything that makes a change irreversible** | `pm uninstall` without `-k`, without `--user 0`, a system partition write, or a root escalation. |
-| **A `setup_adb` script that fetches from somewhere other than Google** | Or over plain HTTP, or without the user's knowledge. |
+| A path to `pm uninstall` or `pm disable-user` that skips the guard | The never-touch list is the core promise. This applies to the scripts, the Python tools and the app alike. |
+| A command injected through a package name, plan file or imported preset | Package names end up in privileged shell commands. Presets come from other people. |
+| A change that cannot be undone | `pm uninstall` without `-k` or `--user 0`, a system partition write, or root. |
+| A restore record that is wrong or missing | The phone could not be put back. |
+| Reading or writing outside the files the user named or `backups/` | |
+| Another app using this app's Shizuku privilege | The app runs shell commands on the user's behalf. |
+| `setup_adb` fetching from anywhere other than the package manager or `dl.google.com` over HTTPS | |
+| A published APK whose signing certificate differs from the digest in the README | |
 
-### What is not a vulnerability
+## Not a vulnerability
 
-- **That ADB can remove apps.** That is Android's own design and the entire premise.
-- **That the user can edit a plan file.** They own the phone. The never-touch list still holds.
-- **That `CYM_ALLOW_PROTECTED=1` relaxes the name-pattern check.** It is documented, it is opt-in,
-  and it does *not* relax the never-touch list. If you find that it does, that **is** a
-  vulnerability — report it.
-- **That a removed package breaks an OEM feature.** That is a database accuracy problem. Open a
-  normal issue: see [CONTRIBUTING.md](CONTRIBUTING.md).
-- **That the phone is less secure with its OEM security suite removed.** Those packages are rated
-  Expert or Unsafe and say so.
+- That ADB can remove apps. That is Android's design and the premise of this project.
+- That the user can edit a plan. The never-touch list still holds.
+- That `CYM_ALLOW_PROTECTED=1` relaxes the name-pattern check. It is opt-in and documented. If it ever relaxes the never-touch list, that **is** a vulnerability.
+- That removing a package breaks an OEM feature. That is a database correction: open a normal issue.
 
 ## What this project does not do
 
-Stated plainly, because it defines the attack surface:
+- No root, no bootloader unlock, no exploit, no write to a system partition.
+- No manufacturer software is redistributed. The only APK here is this project's own app, built from `android/` and signed with the certificate listed in the README.
+- No telemetry. The Android app does not request the internet permission. The scripts make no network requests, except `setup_adb`, which installs adb through your package manager or from `dl.google.com`, and only when adb is missing.
 
-- **No root, and no attempt to get it.** No `su`, no exploit, no bootloader unlock.
-- **No writes to any system partition**, and no firmware or boot image is touched.
-- **No DRM or lock bypass** of any kind.
-- **No manufacturer software is redistributed.** This repository contains no APK, no firmware and
-  no OEM binary.
-- **No network calls from the phone.** The tools read the phone and write files on your computer.
-- **No telemetry.** Nothing here reports anything anywhere. The only outbound request in the whole
-  project is `setup_adb` downloading the platform tools from `dl.google.com`, and only if adb is
-  missing.
+## Your data
 
-Everything works through switches Android offers the owner of the device: Developer options, ADB
-debugging, and `pm disable-user` / `pm uninstall --user 0` — the same mechanism as
-**Settings > Apps > Disable**.
+Sessions are written to `backups/` on your own computer and are git-ignored. A session holds package lists, device model and build, measurements, logs and the restore record. It also holds the **device serial**, in `device.serial` and `device.json`. Remove both before sharing a session in a bug report.
 
-## Where your data goes
+The app keeps its snapshot and restore record in its private storage. It writes a file you can share only when you tap Export, and that file does not include the serial.
 
-Nowhere. Sessions are written to `backups/` on your own computer and `.gitignore` keeps them out of
-git.
-
-A session directory contains package names, package counts, memory and storage figures, battery
-level, and permission counts. It does not contain messages, contacts, photos, accounts or
-credentials. If you share a session for a bug report, that is the full extent of what you are
-sharing — but read it first, since a package list does say which apps you have installed.
-
-## Running the scripts
-
-Read them before you run them. They are plain shell, PowerShell and Python, with no build step and
-no dependencies outside the standard library, specifically so that reading them is practical.
-
-If you cloned this from somewhere other than the canonical repository, diff it against the
-canonical one first. A guard is only a guard if nobody edited it.
+If you got this code from anywhere other than this repository, diff it against this one before running it. A guard only protects you if nobody edited it.
