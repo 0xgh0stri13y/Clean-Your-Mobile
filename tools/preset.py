@@ -7,6 +7,7 @@ phone, hand to someone else, or pull back out after a factory reset.
 
   python tools/preset.py save oneplus-min --from-session   # what you removed
   python tools/preset.py save pixel --from-plan plan.txt --description "..."
+  python tools/preset.py save my-phone --from-device        # what is already gone
   python tools/preset.py list
   python tools/preset.py show oneplus-min
   python tools/preset.py apply oneplus-min --out plan.txt
@@ -19,6 +20,14 @@ A preset stores package names and nothing else. Ratings, descriptions and the
 if_removed line are resolved from the database every time it is shown or
 applied, so a preset written a year ago picks up today's ratings instead of
 carrying a stale copy of them.
+
+--from-device reads a phone that was debloated before this project saw it,
+by hand or with another tool: every system package that is uninstalled for
+the current user (`pm list packages -u` minus `pm list packages`) becomes the
+preset, so the owner finally has a record of what came off, a way to put it
+on a second phone, and something to share. Regular apps that were uninstalled
+are left out: they have no system copy and this project never touches them.
+--include-disabled adds the system packages that are switched off as well.
 
 Safety. A preset is a proposal, never an instruction:
 
@@ -84,6 +93,11 @@ def parse_args() -> argparse.Namespace:
     s.add_argument("--from-session", nargs="?", const="", metavar="SESSION",
                    help="packages removed in a session (default: the newest)")
     s.add_argument("--from-plan", metavar="FILE", help="read a plan file")
+    s.add_argument("--from-device", action="store_true",
+                   help="the system packages already uninstalled for this user on "
+                        "the attached phone, by hand or by an earlier run")
+    s.add_argument("--include-disabled", action="store_true",
+                   help="with --from-device, also take the system packages that are disabled")
     s.add_argument("--packages", nargs="+", metavar="PKG", help="name them directly")
     s.add_argument("--description", default="", help="what this preset is for")
     s.add_argument("--brand", default="", help="brand this was built on")
@@ -226,6 +240,33 @@ def from_session(arg: str) -> Tuple[List[str], str]:
     die(f"{session} has neither a removal record nor a plan.")
 
 
+def from_device(db: Database, include_disabled: bool) -> Tuple[List[str], str, str, List[str]]:
+    """The system packages already uninstalled for user 0 on the attached phone.
+
+    Returns (packages, origin, detected brand, regular apps left out).
+    """
+    adb = Adb()
+    device = adb.require_device()
+    installed = set(adb.packages())
+    system_ever = set(adb.packages("-u", "-s"))
+    everything_ever = set(adb.packages("-u"))
+    if not system_ever:
+        die("The phone returned no system package list - refusing to guess.")
+    removed = sorted(system_ever - installed)
+    skipped = sorted((everything_ever - installed) - system_ever)
+    packages = list(removed)
+    origin = f"uninstalled for user 0 on {device.brand} {device.model}"
+    if include_disabled:
+        disabled = sorted(set(adb.packages("-d")) & system_ever)
+        packages += [p for p in disabled if p not in removed]
+        origin += f", plus {len(disabled)} disabled"
+    if not packages:
+        die("Nothing is uninstalled or disabled for this user on that phone. "
+            "There is nothing to save yet.")
+    brand = db.detect_brand(everything_ever, device.brand)
+    return packages, origin, brand, skipped
+
+
 # ------------------------------------------------------------------ resolving --
 class Resolved:
     """A preset's packages sorted into what can and cannot be acted on."""
@@ -312,30 +353,49 @@ def report(db: Database, res: Resolved, on_device: bool) -> None:
 # ------------------------------------------------------------------ commands --
 def cmd_save(args: argparse.Namespace, db: Database) -> int:
     sources = [bool(args.from_session is not None), bool(args.from_plan),
-               bool(args.packages)]
+               bool(args.packages), bool(args.from_device)]
     if sum(sources) != 1:
-        die("Pick exactly one of --from-session, --from-plan or --packages.")
+        die("Pick exactly one of --from-session, --from-plan, --from-device or --packages.")
+    if args.include_disabled and not args.from_device:
+        die("--include-disabled only means something with --from-device.")
 
+    skipped_regular: List[str] = []
+    brand = args.brand
     if args.packages:
         raw, origin = args.packages, "named on the command line"
     elif args.from_plan:
         raw, origin = read_package_lines(Path(args.from_plan)), args.from_plan
+    elif args.from_device:
+        raw, origin, detected, skipped_regular = from_device(db, args.include_disabled)
+        brand = brand or detected
     else:
         raw, origin = from_session(args.from_session)
 
     packages = clean_packages(raw, origin)
-    data = build(args.name, packages, args.description, args.brand, args.mode)
+    data = build(args.name, packages, args.description, brand, args.mode)
     path = write_preset(args.name, data, args.force)
 
     banner("preset - save")
     ok(f"{path.relative_to(ROOT).as_posix()} - {len(packages)} packages")
     print(f" Source: {origin}")
+    if args.from_device:
+        print(f" Brand : {brand or 'none detected'}")
+        if skipped_regular:
+            print(f" {C.DIM}Left out {len(skipped_regular)} regular app(s) that were also "
+                  f"uninstalled: no system copy, so this project never touches them.{C.RESET}")
     res = resolve(db, packages)
     if res.refused:
         warn(f"{len(res.refused)} of them the guard will refuse - kept in the "
              "preset for the record, but they will never be applied.")
+    if args.from_device and res.unknown:
+        warn(f"{len(res.unknown)} of them are not in the database. They stay in the "
+             "preset as a record of this phone, but `apply` leaves them out unless "
+             "you pass --include-unknown. Each one is a database entry waiting to "
+             "be written: see CONTRIBUTING.md.")
     hr()
     print(f" Apply it with: python tools/preset.py apply {data['name']} --device")
+    if args.from_device:
+        print(f" See it:        python tools/preset.py show {data['name']}")
     hr()
     return 0
 
