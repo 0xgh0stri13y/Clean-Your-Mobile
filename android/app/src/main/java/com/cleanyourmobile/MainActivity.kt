@@ -3,6 +3,7 @@ package com.cleanyourmobile
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
@@ -244,8 +245,14 @@ class MainActivity : AppCompatActivity() {
         var blocked = 0
         var off = 0
         var unrated = 0
+        var regular = 0
 
         for (app in installed) {
+            // Not a system app: no system copy to fall back on, so never offered.
+            if (app.flags and ApplicationInfo.FLAG_SYSTEM == 0) {
+                regular++
+                continue
+            }
             val id = app.packageName
             val entry = db.packages[id]
             if (entry == null) {
@@ -336,7 +343,7 @@ class MainActivity : AppCompatActivity() {
 
         summary.text = installed.size.toString() + " installed · " + recognised +
             " recognised · " + blocked + " protected · " + unrated + " unrated · " +
-            off + " already off"
+            off + " already off · " + regular + " regular apps left alone"
 
         applyFilter()
     }
@@ -695,10 +702,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun showPresetPlan(preset: Preset.Data) {
         val installedApps = packageManager.getInstalledApplications(0)
-        val installed = installedApps.map { it.packageName }.toSet()
-        val disabled = installedApps.filter { !it.enabled }.map { it.packageName }.toSet()
+        val systemApps = installedApps.filter { it.flags and ApplicationInfo.FLAG_SYSTEM != 0 }
+        val installed = systemApps.map { it.packageName }.toSet()
+        val disabled = systemApps.filter { !it.enabled }.map { it.packageName }.toSet()
+        val regular = installedApps.map { it.packageName }.toSet() - installed
 
         val res = Preset.resolve(preset, db, liveState(), installed, disabled)
+        val notInstalled = res.notInstalled.filter { it !in regular }
+        val leftAlone = res.notInstalled.filter { it in regular }
 
         val sb = StringBuilder()
         if (preset.description.isNotBlank()) sb.append(preset.description).append("\n\n")
@@ -732,8 +743,12 @@ class MainActivity : AppCompatActivity() {
         if (res.alreadyOff.isNotEmpty()) {
             sb.append("\nAlready off: ").append(res.alreadyOff.size).append("\n")
         }
-        if (res.notInstalled.isNotEmpty()) {
-            sb.append("\nNot on this phone: ").append(res.notInstalled.size)
+        if (leftAlone.isNotEmpty()) {
+            sb.append("\nRegular apps, left alone: ").append(leftAlone.size)
+                .append(" - not system apps, so a removal could not be undone.\n")
+        }
+        if (notInstalled.isNotEmpty()) {
+            sb.append("\nNot on this phone: ").append(notInstalled.size)
                 .append(" - this preset came from a different model.\n")
         }
 
