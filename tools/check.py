@@ -102,11 +102,19 @@ def main() -> int:
 
     installed = set(adb.packages("--user", "0"))
     disabled = set(adb.packages("-d"))
+    system = set(adb.packages("-s"))
+    if not system:
+        if not quiet:
+            cym.fail("The phone returned no system package list - refusing to continue.")
+        return 2
     db = Database.load()
 
     # A package counts as "back" when it is installed for user 0 and enabled.
-    back = sorted(p for p in expected if p in installed and p not in disabled)
-    still_off = [p for p in expected if p not in back]
+    # A regular app is never "back" and never re-removed: it has no system copy.
+    present = [p for p in expected if p in installed and p not in disabled]
+    regular = sorted(p for p in present if p not in system)
+    back = sorted(p for p in present if p in system)
+    still_off = [p for p in expected if p not in back and p not in regular]
 
     if not quiet:
         hr()
@@ -116,9 +124,18 @@ def main() -> int:
         hr()
         print()
 
+    if regular and not quiet:
+        step(f"{len(regular)} regular app(s) in the plan, left alone")
+        print(f"  {C.DIM}Not system apps, so this tool never removes them. Uninstall them")
+        print(f"  from the home screen like any other app if you want them gone.{C.RESET}")
+        for pid in regular:
+            entry = db.get(pid)
+            print(f"  {C.DIM}-{C.RESET} {pid:<46} {C.DIM}{entry.name if entry else ''}{C.RESET}")
+        print()
+
     if not back:
         if not quiet:
-            ok(f"All {len(expected)} package(s) are still off. Nothing came back.")
+            ok(f"All {len(expected) - len(regular)} package(s) are still off. Nothing came back.")
             print(f"   Patch level: {device.security_patch or 'unknown'}")
         return 0
 

@@ -57,18 +57,26 @@ Write-Host ""
 Write-Step "Checking the plan against the never-touch list"
 $installed = New-Object 'System.Collections.Generic.HashSet[string]'
 foreach ($p in (Get-CymPackages)) { [void]$installed.Add($p) }
+# System apps only: anything else has no system copy, so `pm uninstall -k
+# --user 0` would delete it and `install-existing` could not bring it back.
+$system = New-Object 'System.Collections.Generic.HashSet[string]'
+foreach ($p in (Get-CymPackages "-s")) { [void]$system.Add($p) }
+if ($system.Count -eq 0) { Stop-Cym "The phone returned no system package list - refusing to continue." }
 
 $queue   = New-Object System.Collections.ArrayList
 $refused = New-Object System.Collections.ArrayList
 $absent  = New-Object System.Collections.ArrayList
+$regular = New-Object System.Collections.ArrayList
 foreach ($pkg in $wanted) {
     $reason = Get-BlockReason $pkg
     if ($reason) {
         [void]$refused.Add([pscustomobject]@{ Id = $pkg; Reason = $reason })
-    } elseif ($installed.Contains($pkg)) {
-        [void]$queue.Add($pkg)
-    } else {
+    } elseif (-not $installed.Contains($pkg)) {
         [void]$absent.Add($pkg)
+    } elseif (-not $system.Contains($pkg)) {
+        [void]$regular.Add($pkg)
+    } else {
+        [void]$queue.Add($pkg)
     }
 }
 
@@ -77,6 +85,7 @@ Write-Host (" In the plan        : {0}" -f $wanted.Count)
 Write-Host (" Will be processed  : {0}" -f $queue.Count)
 Write-Host (" Refused (protected): {0}" -f $refused.Count)
 Write-Host (" Not installed      : {0}" -f $absent.Count)
+Write-Host (" Left alone         : {0}  (regular apps, not system apps)" -f $regular.Count)
 
 if ($refused.Count -gt 0) {
     Write-Host ""
@@ -87,6 +96,13 @@ if ($absent.Count -gt 0) {
     Write-Host ""
     Write-Warn "Not installed on this phone, nothing to do:"
     foreach ($a in $absent) { Write-Host "    $a" }
+}
+if ($regular.Count -gt 0) {
+    Write-Host ""
+    Write-Warn "Left alone - regular apps, not system apps. A removal would delete the"
+    Write-Warn "only copy and the restore record could not bring it back. Uninstall them"
+    Write-Warn "from the home screen like any other app if you want them gone:"
+    foreach ($r in $regular) { Write-Host "    $r" }
 }
 if ($queue.Count -eq 0) {
     Write-Host ""
@@ -355,6 +371,7 @@ if ($DryRun) {
     Write-Host " DRY RUN - nothing on the phone was changed" -ForegroundColor White
     Write-Host (" Would process : {0} package(s)" -f $done)
     Write-Host (" Would refuse  : {0} package(s)" -f $refused.Count)
+    Write-Host (" Left alone    : {0} regular app(s)" -f $regular.Count)
     Write-Rule
     Write-Host " Re-run without -DryRun to apply it."
     exit 0
@@ -363,6 +380,7 @@ Write-Host " Result" -ForegroundColor White
 Write-Host (" Processed : {0}" -f $done)
 Write-Host (" Failed    : {0}" -f $failed)
 Write-Host (" Refused   : {0}" -f $refused.Count)
+Write-Host (" Left alone: {0}" -f $regular.Count)
 if ($aborted) {
     Write-Host (" Run stopped early - {0} package(s) were not reached" -f ($total - $done - $failed)) -ForegroundColor Yellow
 }

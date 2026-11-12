@@ -301,6 +301,14 @@ and which keyboard is the active input method, and drops both from the plan what
 says about them. `scripts/debloat.sh` checks that something still answers HOME before it starts and
 again after it finishes.
 
+**4. System apps only.** A package that `pm list packages -3` returns is not a system app: the
+owner installed it, or the manufacturer placed it in `/data` as an ordinary app. There is no
+system copy underneath it, so `pm uninstall -k --user 0` would delete the only one and
+`cmd package install-existing` could not bring it back. `tools/scan.py` lists those and leaves
+them out of the plan, and `scripts/debloat.sh` refuses them if a hand-written plan names one. On
+an OPPO A3x this is what kept several apps the owner had installed from the Play Store, all of
+which match "partner preload" rows in the database, out of a recommended plan.
+
 On top of that: batches of five with a health check between each, which sends HOME and then
 confirms the package service still answers, because a phone that cannot run `cmd package` cannot be
 restored either; an automatic attempt to put the last batch back if that check fails; and a stop
@@ -467,6 +475,7 @@ developer options. On a work-managed phone, don't: see [Safety](#safety).
 | | |
 |---|---|
 | **Nothing is deleted** | `pm uninstall -k --user 0` removes an app for your user profile. `-k` keeps its data, and the copy on the read-only system partition is untouched. `--disable` is more conservative still: `pm disable-user` removes nothing at all. |
+| **System apps only** | An app that is not a system app, one you installed or one the manufacturer dropped into `/data` as an ordinary app, has no system copy to fall back on, so the tools never touch it. Uninstall those from the home screen like any other app. |
 | **No root, ever** | No `su`, no exploit, no bootloader unlock, no system partition write, no boot image touched. This cannot brick a phone. |
 | **The restore record comes first** | Written before the first removal and appended as each package comes off. If the run dies halfway, the record already covers everything up to that point. |
 | **A factory reset is the floor** | It always works, and every system package comes back, because none of them were ever deleted. |

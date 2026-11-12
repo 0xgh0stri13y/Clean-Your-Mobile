@@ -34,6 +34,7 @@ this repository already behaves this way; match it.
 | **FORBIDDEN** | Anything requiring `su` or root | Not how this project works. |
 | **FORBIDDEN** | Writing a system partition, or flashing a boot image | Irreversible, and can brick a phone. |
 | **FORBIDDEN** | `pm clear <pkg>` as part of a removal | Destroys user data for no benefit. |
+| **FORBIDDEN** | Removing a package that is not a system app (anything `pm list packages -3` returns) | It has no system copy. `-k --user 0` deletes the only one, and `install-existing` cannot bring it back. The owner uninstalls those from the home screen. |
 
 ### 3. Always get explicit approval
 

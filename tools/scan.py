@@ -18,6 +18,11 @@ Levels, matching the database's own ratings:
 
 Nothing rated Unsafe and nothing on the never-touch list ever enters a plan,
 at any level.
+
+Neither does a regular app: one installed from a store, or one the manufacturer
+placed in /data as an ordinary app rather than a system app. It has no system
+copy underneath it, so a removal would be a real deletion that the restore
+record could not undo. Those are listed and left alone.
 """
 
 from __future__ import annotations
@@ -115,6 +120,7 @@ def main() -> int:
             for ln in path.read_text(encoding="utf-8").splitlines() if ln.strip()
         })
         disabled: List[str] = []
+        user_apps: set = set()  # a saved list cannot tell system apps from regular ones
         session = cym.resolve_session(args.session, required=False)
         if not args.as_json:
             banner("scan (from a saved list)")
@@ -128,6 +134,7 @@ def main() -> int:
             print(f" Serial : {device.serial}")
         installed = adb.packages()
         disabled = adb.packages("-d")
+        user_apps = set(adb.packages("-3"))
         session = cym.resolve_session(args.session, required=False) or cym.new_session(device)
 
     if not installed:
@@ -142,6 +149,8 @@ def main() -> int:
         hr()
         print(f" Installed packages : {len(installed)}")
         print(f" Already disabled   : {len(disabled)}")
+        if device is not None:
+            print(f" Regular apps       : {len(user_apps)}   (not system apps, never planned)")
         if brand:
             print(f" Brand profile      : {profile.get('display_name', brand)}"
                   f"  ({profile.get('os_name', '?')})")
@@ -156,8 +165,16 @@ def main() -> int:
     plan: List[cym.Pkg] = []
     blocked: List[tuple] = []
     unknown: List[str] = []
+    regular: List[cym.Pkg] = []
 
     for pid in installed:
+        if pid in user_apps:
+            # Not a system app: there is no system copy to fall back on, so a
+            # removal could not be undone. Never planned, whatever the database says.
+            entry = db.get(pid)
+            if entry is not None:
+                regular.append(entry)
+            continue
         entry = db.get(pid)
         if entry is None:
             # A package the database has never heard of is still protected if it
@@ -209,10 +226,12 @@ def main() -> int:
                 "unknown": len(unknown),
                 "planned": len(plan),
                 "blocked": len(blocked),
+                "regular_apps": len(user_apps),
                 **{s.lower(): len(v) for s, v in buckets.items()},
             },
             "plan": [p.__dict__ for p in plan],
             "blocked": [{"id": p, "reason": r} for p, r in blocked],
+            "regular_apps_left_alone": sorted(p.id for p in regular),
             "unknown_flagged": [{"id": p, "flags": f} for p, f in unknown_flagged],
             "unknown": unknown if args.show_unknown else [],
         }, indent=2))
@@ -265,6 +284,16 @@ def main() -> int:
         if len(set(blocked)) > 20:
             print(f"  {C.DIM}... and {len(set(blocked)) - 20} more{C.RESET}")
 
+    if regular:
+        print()
+        step(f"Left alone: {len(regular)} regular app(s) the database lists as preloads")
+        print(f"  {C.DIM}Installed as ordinary apps on this phone, not system apps, so a")
+        print(f"  removal would delete the only copy and the restore record could not")
+        print(f"  bring it back. Uninstall them from the home screen like any other app")
+        print(f"  if you want them gone.{C.RESET}")
+        for p in sorted(regular, key=lambda p: p.id):
+            print(f"  {C.DIM}-{C.RESET} {p.id:<46} {C.DIM}{p.name}{C.RESET}")
+
     if unknown_flagged:
         print()
         step(f"Not in the database, but worth a look: {len(unknown_flagged)}")
@@ -298,6 +327,9 @@ def main() -> int:
                 fh.write(f"# Device: {device.brand} {device.model}, Android {device.android}\n")
             fh.write(f"# Brand profile: {profile.get('display_name', brand or 'universal')}\n")
             fh.write(f"# Level: {args.level}\n")
+            if regular:
+                fh.write(f"# Left out: {len(regular)} regular app(s) that are not system apps "
+                         "(see the scan output)\n")
             fh.write(f"# Generated: {datetime.now(timezone.utc).isoformat(timespec='seconds')}\n")
             fh.write("#\n# Read this before you apply it. Delete any line you want to keep.\n")
             fh.write("# Apply with: bash scripts/debloat.sh "

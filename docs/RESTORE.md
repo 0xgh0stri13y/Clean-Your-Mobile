@@ -155,6 +155,11 @@ Honesty matters more here than reassurance:
   removing it. This is why it is rated Expert.
 - **NFC transit and access cards.** Cards provisioned to the secure element through an OEM wallet
   are tied to it. Move them off first. Also rated Expert.
+- **Regular apps.** An app that is not a system app, one you installed or one the manufacturer
+  placed in `/data` as an ordinary app, has no system copy. `pm uninstall -k --user 0` deletes the
+  only one and `cmd package install-existing` cannot bring it back; only a reinstall from the store
+  can. This is why `scan.py`, `debloat.sh` and `check.py` leave them alone, and why a plan from an
+  older version that names one is refused rather than applied.
 - **Animation and settings changes.** Those are `settings put global` changes, not package changes,
   so the restore script does not revert them. Put them back by hand:
 
