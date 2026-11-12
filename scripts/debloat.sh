@@ -71,20 +71,27 @@ done < "$PLAN"
 [ "${#WANTED[@]}" -eq 0 ] && die "No package names in $PLAN"
 
 # ------------------------------------------------------------- the guard -----
-# Three things are checked before anything is touched:
+# Four things are checked before anything is touched:
 #   1. the never-touch list          -> refused, no override
 #   2. a protected-category name     -> refused unless CYM_ALLOW_PROTECTED=1
 #   3. actually installed right now  -> skipped, nothing to do
+#   4. a system app                  -> left alone otherwise, see below
 step "Checking the plan against the never-touch list"
 INSTALLED="$(sh_ "pm list packages" | sed 's/^package://' | sort)"
+# System apps only: anything else has no system copy, so `pm uninstall -k
+# --user 0` would delete it and `install-existing` could not bring it back.
+SYSTEM="$(sh_ "pm list packages -s" | sed 's/^package://' | sort)"
+[ -z "$SYSTEM" ] && die "The phone returned no system package list - refusing to continue."
 
-declare -a QUEUE=() REFUSED=() ABSENT=()
+declare -a QUEUE=() REFUSED=() ABSENT=() REGULAR=()
 for pkg in "${WANTED[@]}"; do
     if reason="$(block_reason "$pkg")"; then
-        if grep -qxF "$pkg" <<< "$INSTALLED"; then
-            QUEUE+=("$pkg")
-        else
+        if ! grep -qxF "$pkg" <<< "$INSTALLED"; then
             ABSENT+=("$pkg")
+        elif ! grep -qxF "$pkg" <<< "$SYSTEM"; then
+            REGULAR+=("$pkg")
+        else
+            QUEUE+=("$pkg")
         fi
     else
         REFUSED+=("$pkg|$reason")
@@ -96,6 +103,7 @@ printf ' In the plan        : %s\n' "${#WANTED[@]}"
 printf ' Will be processed  : %s\n' "${#QUEUE[@]}"
 printf ' Refused (protected): %s\n' "${#REFUSED[@]}"
 printf ' Not installed      : %s\n' "${#ABSENT[@]}"
+printf ' Left alone         : %s  (regular apps, not system apps)\n' "${#REGULAR[@]}"
 
 if [ "${#REFUSED[@]}" -gt 0 ]; then
     info ""
@@ -108,6 +116,13 @@ if [ "${#ABSENT[@]}" -gt 0 ]; then
     info ""
     warn "Not installed on this phone, nothing to do:"
     printf '    %s\n' "${ABSENT[@]}" >&2
+fi
+if [ "${#REGULAR[@]}" -gt 0 ]; then
+    info ""
+    warn "Left alone - regular apps, not system apps. A removal would delete the"
+    warn "only copy and the restore record could not bring it back. Uninstall them"
+    warn "from the home screen like any other app if you want them gone:"
+    printf '    %s\n' "${REGULAR[@]}" >&2
 fi
 
 [ "${#QUEUE[@]}" -eq 0 ] && { info ""; ok "Nothing left to do."; exit 0; }
@@ -383,6 +398,7 @@ if [ "$DRY_RUN" = 1 ]; then
     printf ' %sDRY RUN%s - nothing on the phone was changed\n' "$C_BOLD" "$C_RESET"
     printf ' Would process : %s package(s)\n' "$DONE"
     printf ' Would refuse  : %s package(s)\n' "${#REFUSED[@]}"
+    printf ' Left alone    : %s regular app(s)\n' "${#REGULAR[@]}"
     hr
     info " Re-run without --dry-run to apply it."
     exit 0
@@ -391,6 +407,7 @@ printf ' %sResult%s\n' "$C_BOLD" "$C_RESET"
 printf ' Processed : %s\n' "$DONE"
 printf ' Failed    : %s\n' "$FAILED"
 printf ' Refused   : %s\n' "${#REFUSED[@]}"
+printf ' Left alone: %s\n' "${#REGULAR[@]}"
 [ "$ABORTED" = 1 ] && printf ' %sRun stopped early - %s package(s) in the plan were not reached%s\n' \
     "$C_YELLOW" "$(( TOTAL - DONE - FAILED ))" "$C_RESET"
 hr
