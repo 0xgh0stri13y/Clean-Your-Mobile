@@ -49,7 +49,7 @@ SAFETY_RANK = {name: i for i, name in enumerate(SAFETY_ORDER)}
 # never-touch list misses on an unusual ROM. Kept in step with the same list in
 # scripts/lib.sh - see docs/DATABASE.md.
 PROTECTED_PATTERNS = [
-    r"^android$", r"systemui", r"^com\.android\.settings", r"telecom",
+    r"^android$", r"^oplus$", r"systemui", r"^com\.android\.settings", r"telecom",
     r"telephony", r"dialer", r"incallui", r"\.mms", r"messaging",
     r"inputmethod", r"latin", r"keyboard", r"^com\.android\.vending$",
     r"^com\.google\.android\.gms", r"^com\.google\.android\.gsf",
