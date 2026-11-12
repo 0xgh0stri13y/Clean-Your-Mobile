@@ -161,6 +161,17 @@ def main() -> int:
         return 1
 
     # ---------------------------------------------------------------- --fix --
+    # Every package --fix removes goes into a session's removal record the
+    # moment it comes off, so scripts/restore.sh can put it back.
+    record_session = cym.resolve_session(args.session, required=False)
+    if record_session is None:
+        if not quiet:
+            cym.fail("--fix needs a session to keep a restore record in. "
+                     "Run scripts/snapshot.sh before, or pass --session.")
+        return 2
+    record = record_session / "removed_packages.txt"
+    recorded = set(cym.read_lines(record))
+
     if not quiet:
         print()
         step("Re-applying")
@@ -182,6 +193,10 @@ def main() -> int:
             reply = adb.shell(f"pm uninstall -k --user 0 {pid}").strip()
             good = "Success" in reply
         if good:
+            if pid not in recorded:
+                with record.open("a", encoding="utf-8") as fh:
+                    fh.write(pid + "\n")
+                recorded.add(pid)
             if not quiet:
                 print(f"  {C.GREEN}ok{C.RESET}   {pid}")
             done += 1
@@ -191,13 +206,10 @@ def main() -> int:
             failed += 1
 
     # Record what the fix did, next to the session it came from.
-    if not args.plan:
-        session = cym.resolve_session(args.session, required=False)
-        if session:
-            stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
-            with (session / "debloat.log").open("a", encoding="utf-8") as fh:
-                fh.write(f"{stamp} CHECK-FIX reapplied={done} failed={failed} "
-                         f"refused={refused} patch={device.security_patch}\n")
+    stamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with (record_session / "debloat.log").open("a", encoding="utf-8") as fh:
+        fh.write(f"{stamp} CHECK-FIX reapplied={done} failed={failed} "
+                 f"refused={refused} patch={device.security_patch}\n")
 
     if not quiet:
         print()
