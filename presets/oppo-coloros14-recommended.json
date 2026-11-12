@@ -1,0 +1,33 @@
+{
+  "schema": "cym-preset",
+  "schema_version": "1.0.0",
+  "name": "oppo-coloros14-recommended",
+  "description": "Recommended-rated OEM and partner packages that were uninstalled for user 0 on an OPPO A3x 5G (CPH2681, ColorOS 14.0.1, Android 14) and stayed off while the phone was in daily use. Google apps and the Advanced and Expert packages removed on the same phone are left out on purpose: this is the baseline, not everything. Apply with: python tools/preset.py apply oppo-coloros14-recommended --device",
+  "brand": "oppo",
+  "mode": "remove",
+  "created": "2026-11-12T00:00:00+00:00",
+  "packages": [
+    "com.heytap.pictorial",
+    "com.coloros.compass2",
+    "com.coloros.operationManual",
+    "com.finshell.fin",
+    "com.nearme.gamecenter",
+    "com.oplus.games",
+    "com.redteamobile.roaming",
+    "com.coloros.calculator",
+    "com.coloros.weather2",
+    "com.heytap.browser",
+    "com.heytap.market",
+    "com.heytap.music",
+    "com.heytap.cloud",
+    "com.android.email.partnerprovider",
+    "com.facebook.appmanager",
+    "com.facebook.services",
+    "com.facebook.system",
+    "com.coloros.healthcheck",
+    "com.oplus.crashbox",
+    "com.oplus.logkit",
+    "com.oplus.powermonitor",
+    "com.oplus.statistics.rom"
+  ]
+}
