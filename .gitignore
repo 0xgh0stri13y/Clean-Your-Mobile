@@ -1,0 +1,73 @@
+# Session data from real phones. These hold a device serial, the build number,
+# and the complete list of apps installed on someone's phone - never commit them.
+# The .gitkeep below keeps the directory itself in the repository.
+backups/*
+!backups/.gitkeep
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+.venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Android build output. The app's source lives in android/; everything Gradle
+# generates from it does not belong in the repository.
+android/build/
+android/app/build/
+android/.gradle/
+android/local.properties
+
+# The database is copied into assets by the syncDatabase Gradle task at build
+# time. database/ is the single source of truth, and a second committed copy
+# would silently go stale - the exact drift this project avoids everywhere else.
+android/app/src/main/assets/
+
+# Signing material. These should never be inside the working tree at all - the
+# keystore lives in ~/.cleanyourmobile-signing/ - but a leaked keystore lets
+# someone ship an update as you, so this is here as a second line of defence.
+*.keystore
+*.jks
+keystore.properties
+signing.properties
+
+# Build artefacts in general are ignored...
+*.apk
+*.aab
+platform-tools/
+
+# ...except the published release APK at the repository root, which is the
+# whole point: someone should be able to download it without building anything.
+# `gradle -p android publishApkRelease` regenerates it.
+!/CleanYourMobile.apk
+
+# Scratch
+*.tmp
+*.bak
+*.json.bak
+
+# Locally installed Claude Code skills - third-party tooling and not this
+# project's to redistribute. Delete these two lines if you ever want to ship a
+# project-specific skill to contributors.
+.claude/
+!.claude/settings.json
+
+# Private session notes. SESSION_HANDOFF.private.md holds the signing keystore
+# password in plaintext; it lives in the repo folder only because the drive root
+# is not writable. The glob covers any future *.private.md the same way, so one
+# `git add -A` can never publish the key that ships updates.
+*.private.md
