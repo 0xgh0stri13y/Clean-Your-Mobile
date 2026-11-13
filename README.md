@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/banner.png" alt="CleanYourMobile. Your phone, minus the bloat. Debloat any Android phone over Wi-Fi. No root, fully reversible." width="800">
+  <img src="docs/banner.png" alt="CleanYourMobile. Your phone, minus the bloat. Strip the bloatware from any Android phone over Wi-Fi. No root, no cable, nothing uninstalled, and a one-line restore." width="800">
 </p>
 
 <p align="center">
@@ -22,30 +22,20 @@
 </p>
 
 <p align="center">
-  <b>537 packages</b> across <b>15 brand families</b> ·
-  <b>207</b> never-touch entries · nothing to install beyond Python and adb
+  <b>505 packages</b> across <b>15 brand families</b> ·
+  <b>202</b> never-touch entries · <b>no</b> external dependencies
 </p>
 
 ## About
 
-**CleanYourMobile** is a safety-first debloater for Android phones. It removes carrier bloat, lock
-screen ad carousels (Glance, magazine feeds), vendor ad services (MIUI MSA), background telemetry
-and duplicated manufacturer apps, from a computer over USB or Wi-Fi, or from the phone itself
-through Shizuku. Nothing is touched until you approve the plan.
+**CleanYourMobile** is an autonomous, safety-first debloating framework for Android smartphones. It strips carrier bloat, lock screen ad carousels (Glance, magazine feeds), vendor ad daemons (MIUI MSA), background telemetry, and redundant OEM clones over local Wi-Fi or USB.
 
-Inspired by [CleanYourTV](https://github.com/Gathin23/cleanyourtv), it brings the same transparent,
-reversible approach to phones:
-
-- **No root** — standard Android Debug Bridge (`adb`) commands only: `pm uninstall -k --user 0` and
-  `pm disable-user --user 0`.
-- **Nothing permanently deleted** — the read-only system partition is never written. A reboot or the
-  restore script undoes a mistake, and a factory reset brings back every system package.
-- **An audited offline database** — 537 packages across 15 brand families, each saying what it does
-  and what breaks if it goes.
-- **A four-layer guard** — 207 never-touch entries (phone calls, SMS, emergency alerts, SIM, camera,
-  keyboard, Play Services and more), a protected-name pattern, the launcher and keyboard you are
-  using right now, and system apps only.
-- **A restore record first** — written before the first package comes off, not after the last.
+Inspired by [CleanYourTV](https://github.com/Gathin23/cleanyourtv), it brings the same transparent, reversible approach to phones:
+- **No root required** — Uses standard Android Debug Bridge (`adb`) user-space commands (`pm uninstall -k --user 0`).
+- **Zero brick risk** — The read-only system partition stays untouched. Nothing is permanently deleted.
+- **Audited offline database** — 505 packages mapped across 15 brand families, each detailing what it does and what breaks if removed.
+- **3-layer safety guard** — 202 essential packages (phone calls, SMS, emergency alerts, biometrics, camera, Play Services) are permanently locked from removal.
+- **Instant rollback** — An automatic restore script is generated before the first app is touched.
 
 ## Start here
 
@@ -57,7 +47,7 @@ There are three ways to use this, in order of how much you have to set up.
 | **A phone and a computer** | [Quick start](#quick-start) — a coding assistant does the work in about ten minutes | Low |
 | **A computer, no assistant** | [Doing it by hand](#doing-it-by-hand) — the same scripts, run by you. The best-tested path | Medium |
 | **An iPhone** | Nothing here applies. iOS has no debug bridge of this kind and no preinstalled bloat to remove | — |
-| **Want to see it first** | [What a scan looks like](#what-a-scan-looks-like) — output from a real phone | — |
+| **Want to see it first** | [What a scan looks like](#what-a-scan-looks-like) — real output from a real phone | — |
 
 **Use it:** [The Android app](#the-android-app) · [Quick start](#quick-start) ·
 [Doing it by hand](#doing-it-by-hand)
@@ -73,8 +63,8 @@ There are three ways to use this, in order of how much you have to set up.
 
 ## The Android app
 
-[`CleanYourMobile.apk`](CleanYourMobile.apk) runs the same database and guard on the phone itself,
-with no computer involved once [Shizuku](https://shizuku.rikka.app/) is started. The source is in
+[`CleanYourMobile.apk`](CleanYourMobile.apk) runs the same database on the phone itself, with no
+computer involved once [Shizuku](https://shizuku.rikka.app/) is started. The source is in
 [`android/`](android/).
 
 | | |
@@ -83,7 +73,7 @@ with no computer involved once [Shizuku](https://shizuku.rikka.app/) is started.
 | *Dark, true OLED black* | *Light* |
 
 **It is a reference implementation, not a product.** It exists to show that the database and the
-guard port cleanly to Android. For everyday use on a phone,
+three-layer guard port cleanly to Android. For everyday use on a phone,
 [Canta](https://github.com/samolego/Canta) is more mature, more complete and has thousands of
 users; the honest comparison is in [the FAQ](#how-does-this-compare-to-canta-and-shizuku).
 
@@ -96,22 +86,23 @@ users; the honest comparison is in [the FAQ](#how-does-this-compare-to-canta-and
 | **3. Install the APK** | Download [`CleanYourMobile.apk`](CleanYourMobile.apk) and open it. Android will ask you to allow installs from your browser or file manager. |
 | **4. Grant access** | Open the app and tap **Grant access**; Shizuku asks you to confirm. |
 
-The app needs Android 8.0 (API 26) or newer; starting Shizuku without a computer needs Android 11.
+Android 8.0 (API 26) or newer for the app itself; Android 11 or newer to start Shizuku without a
+computer.
 
 ### What it does
 
 | | |
 |---|---|
-| **Reads the same database** | `database/` is copied in at build time, so a fresh build always carries the current copy. The published APK carries the database as it was at its release. |
+| **Reads the same database** | All 505 packages, copied in from `database/` at build time, so the APK cannot ship a stale copy. |
 | **Detects the brand** | The same scoring as `tools/cym.py`, including the alias bonus that catches "Redmi" and "iQOO" reporting themselves as something other than their maker. The brand's notes appear at the top of the screen. |
 | **Shows what you lose** | Every row carries its `if_removed` line, which is the field this whole project exists for. |
 | **Sorts by impact** | Advertising and telemetry first, manufacturer features last. A separate axis from the safety rating: a preinstalled compass and a lock-screen ad carousel are both "Recommended", but only one is doing you harm. |
-| **Refuses what it must** | The same checks as the scripts: the never-touch list, an Unsafe rating, the protected-name pattern, the launcher and keyboard in use, and system apps only. On a OnePlus 10 Pro it holds back 112 packages. |
-| **Backs up first** | Before the very first change it saves every installed package, which ones were already off, and the build. A restore record is written before the first package comes off, and the undo commands can be exported as a text file. |
+| **Refuses what it must** | The same three layers, and `Guard.kt` is a fourth copy of the pattern generated from `scripts/lib.sh`. On a OnePlus 10 Pro it holds back 112 packages. |
+| **Backs up first** | A full snapshot of the phone before the first change, plus a restore record written before the first package comes off and an exportable text file of the undo commands. |
 | **Disables, never deletes** | `pm disable-user --user 0`. **Restore all** switches everything back on. |
-| **Shows what it cannot rate** | A package the database has no entry for is listed under **Unrated** rather than quietly left out. It is shown and never offered: an unrated package is evidence for a human, not a verdict. |
+| **Shows what it cannot rate** | A package the database has no entry for is listed under **Unrated** rather than quietly left out, which is what used to happen. It is shown and never offered: an unrated package is evidence for a human, not a verdict. |
 | **Presets** | **Export preset** saves what you actually switched off as a portable JSON profile; **Import preset** reads one from a file or the clipboard, re-checks every package against the database and the guard, and then only ticks the boxes. Nothing is applied by an import. The format is the same one [`tools/preset.py`](tools/preset.py) reads, so a profile moves between a phone and a computer either way. |
-| **Light or dark** | Chosen under **Appearance**: follow the system, light, or true `#000000` OLED dark, the default. Every text colour passes the 4.5:1 contrast requirement against its background. |
+| **Light or dark** | True `#000000` OLED black or a warm light theme, with a toggle under **Appearance**. Every colour pair passes the 4.5:1 contrast requirement. |
 
 ### What is verified, and what is not
 
@@ -124,28 +115,24 @@ Tested on a OnePlus 10 Pro (NE2213), Android 16, OxygenOS 16.0.3:
 | The privileged disable (`enabled 0 → 3`) and restore (`3 → 1`) | The three-consecutive-failure abort |
 | The backup snapshot and the exported undo file | The between-batch health check |
 | The light and dark themes, search, filters, selection | Any phone other than the one above |
+| | Preset export and import, and the **Unrated** list — they compile and the validation is covered by its command-line twin, but neither has been run on a phone yet |
 
-Preset export and import and the **Unrated** list compile, and their validation is covered by the
-command-line twin, but neither has been run on a phone yet.
-
-The command-line tools are the better-tested path by a wide margin: they have been run against
-OnePlus and vivo phones, including a real 32-package removal, which is where most of this project's
-bugs were found.
+The command-line tools are the better-tested path by a wide margin: they have been run against two
+brands and a real 32-package removal, which is where most of this project's bugs were found.
 
 ### Building it yourself
 
 ```bash
 gradle -p android assembleDebug      # build only
-gradle -p android publishApkRelease  # build, then copy the release APK to the root
+gradle -p android publishApkRelease  # build, then copy the signed APK to the root
 ```
 
-Needs JDK 17 or newer, Gradle 8.7 or newer (there is no wrapper), and the Android SDK with platform
-35 and build-tools 34 or newer. `database/` is read from one level up; the build **fails** rather
-than producing an APK with no never-touch list.
+Needs JDK 17 and the Android SDK, platform 35 with build-tools 34 or newer. `database/` is read
+from one level up; the build **fails** rather than producing an APK with no never-touch list.
 
 `Guard.kt` holds the **fourth** copy of the protected-name pattern, generated from
-`scripts/lib.sh`. Never edit it by hand: `python tools/sync_guard.py --fix` regenerates it, and
-`python tools/sync_guard.py` checks that all four copies agree.
+`scripts/lib.sh`. Never edit it by hand — run `python tools/sync_guard.py`, which checks that all
+four copies agree.
 
 The published APK is a **signed release build**. Its signing key is held outside the repository
 and never committed, so the certificate below identifies builds that actually came from here:
@@ -155,11 +142,9 @@ Signer certificate DN:  CN=0xgh0stri13y, OU=CleanYourMobile, O=CleanYourMobile
 SHA-256 digest:         bf068b12ebc1c7f97ecaa33f312b19f69f0f97b8d1bfc6f0a164561712ca7782
 ```
 
-Check any copy you download with `apksigner verify --print-certs CleanYourMobile.apk`. A different
-digest is not this build. `publishApkRelease` signs only when the key is present; without it the
-release APK is left unsigned. If you would rather not trust a binary at all, build it from source
-with the commands above: your build carries your own signature rather than the certificate above,
-and the current database.
+Check any copy you download with
+`apksigner verify --print-certs CleanYourMobile.apk`. A different digest is not this build.
+If you would rather not trust a binary at all, the build above reproduces it from source.
 
 **More:** [`android/README.md`](android/README.md).
 
@@ -171,14 +156,14 @@ phone's developer options, allow your computer once, and the rest is standard An
 | Step | What happens |
 |---|---|
 | **Measure** | Every installed package, plus RAM, storage, battery, processes, services, and how many apps hold your location, camera, microphone and contacts permissions. |
-| **Scan** | Each package is matched against a database of 537 known packages: what it is, what it does, and what you lose if it goes. Anything unrecognised is reported as unrecognised. |
+| **Scan** | Each package is matched against a database of 505 known packages: what it is, what it does, and what you lose if it goes. Anything unrecognised is reported as unrecognised. |
 | **Ask** | A plan grouped by category, each line saying what breaks. You delete whatever you want to keep. Nothing is touched before you approve it. |
 | **Remove** | With `pm uninstall -k --user 0`, which removes an app for your user profile only. The copy on the read-only system partition stays. Five at a time, with a health check between batches. |
 | **Measure again** | The same numbers after a reboot, side by side with the first set. |
 
 **No root, no system partition written, nothing deleted, and a one-line restore if you change your
-mind.** The restore record is created before the first removal and gets a line the moment each
-package comes off, so an interrupted run still covers everything removed up to that point.
+mind.** The restore record is written before the first removal, not after the last one, so it
+covers everything even if the run is interrupted.
 
 The bloat differs by brand and by region, so the scan reads your phone rather than trusting a list,
 and asks before touching anything you might be using.
@@ -188,10 +173,11 @@ and asks before touching anything you might be using.
 | You have | Do this |
 |---|---|
 | **A computer with a coding assistant** | Use the prompt: the three steps below. |
-| **A computer, no coding assistant** | Run the commands yourself: they are in [Doing it by hand](#doing-it-by-hand). |
+| **A computer, no coding assistant** | Run the three steps yourself: the commands are in [Doing it by hand](#doing-it-by-hand). |
 
-The computer needs a shell, Python 3.8 or newer, and either a USB cable or the phone on the same
-Wi-Fi network. No SDK, no JDK, nothing to `pip install`.
+The steps below are written for a coding assistant. The computer needs a shell, Python 3.8 or
+newer, and either a USB cable or the phone on the same Wi-Fi network. No SDK, no JDK, nothing to
+`pip install`.
 
 Any of these work: [Claude Code](https://claude.com/claude-code),
 [Codex](https://github.com/openai/codex),
@@ -207,18 +193,23 @@ Any of these work: [Claude Code](https://claude.com/claude-code),
 Cloning matters: the assistant reuses this repository's `scripts/debloat.sh` and `tools/scan.py`
 instead of writing its own, and that is where the never-touch guard, the batching, the health
 checks and the restore record live. An assistant improvising `pm uninstall` loops has none of them.
+
 With this repository as context it takes about ten minutes.
 
 ## Doing it by hand
 
-Everything the assistant does, you can run yourself. The only requirement is Python 3.8 or newer;
-the tools in `tools/` import nothing outside the standard library. The first script installs the
-Android platform tools if they are missing. Nothing below needs root, and `--dry-run` changes
-nothing on the phone.
+Everything the assistant does, you can run yourself. One thing has to be on the computer first:
+
+| You need | For |
+|---|---|
+| **Python 3.8 or newer** | The tools in `tools/`. They import nothing outside the standard library, so there is nothing to install. |
+
+The Android platform tools are installed by the first script if they are missing, from Google's own
+download. Nothing below needs root, and `--dry-run` changes nothing at all.
 
 ```bash
 git clone https://github.com/0xgh0stri13y/Clean-Your-Mobile
-cd Clean-Your-Mobile
+cd clean-your-mobile
 
 bash scripts/setup_adb.sh                 # install the platform tools if missing
 bash scripts/connect.sh                   # USB; --wireless to pair over Wi-Fi
@@ -235,17 +226,15 @@ bash scripts/snapshot.sh after
 python tools/report.py                    # report.md, report.json, report.txt
 ```
 
-Use `python3` where `python` is not on the path, as on macOS and many Linux systems.
-
 | Tool | What it does |
 |---|---|
-| [`scripts/setup_adb.sh`](scripts/setup_adb.sh) | Installs the Android platform tools: Homebrew or your package manager first, Google's official zip as a fallback. The PowerShell twin always uses the zip. |
-| [`scripts/connect.sh`](scripts/connect.sh) | Finds the phone over USB, pairs over Wi-Fi with a pairing code, or moves a trusted USB phone onto Wi-Fi. Explains each failure in plain words alongside adb's own message. |
+| [`scripts/setup_adb.sh`](scripts/setup_adb.sh) | Installs the Android platform tools: Homebrew or your package manager first, Google's official zip as a fallback. |
+| [`scripts/connect.sh`](scripts/connect.sh) | Finds the phone over USB, pairs over Wi-Fi with a pairing code, or moves a trusted USB phone onto Wi-Fi. Explains each failure instead of printing the adb error. |
 | [`scripts/snapshot.sh`](scripts/snapshot.sh) | Measures packages, RAM, storage, battery, processes, services and permission holders into one session directory, as readable text and as JSON. |
 | [`tools/explain.py`](tools/explain.py) | Looks up a package name with no phone attached: what it is, what you lose if it goes, whether the guard refuses it and why, and the command that undoes each change. `--search` explores by keyword, `--json` feeds other tools. |
-| [`tools/scan.py`](tools/scan.py) | Reads the phone, detects the brand, matches all 537 database entries, and writes a plan with each line's consequence beside it. `--from-list` scores a saved package list with no phone attached; it cannot tell system apps from regular ones, so that check happens in `debloat.sh`. |
-| [`tools/preset.py`](tools/preset.py) | Saves a curated list as a named, portable profile: apply it to a second phone, pull it back after a factory reset, export it as JSON, share it. It stores package names only and resolves every rating from the database each time, so a profile never carries stale ratings. On import and on apply, every package goes back through the guard, and a file with a malformed package name is rejected whole rather than applied in part. `--from-device` saves what a phone debloated by hand already has uninstalled. |
-| [`scripts/debloat.sh`](scripts/debloat.sh) | Applies a plan through the guard, in health-checked batches of five, verifying each removal and writing the restore record before the first one. See [How the scripts protect your phone](#how-the-scripts-protect-your-phone). |
+| [`tools/scan.py`](tools/scan.py) | Reads the phone, detects the brand, matches all 505 database entries, and writes a plan with each line's consequence beside it. `--from-list` scores a saved package list with no phone attached. |
+| [`tools/preset.py`](tools/preset.py) | Saves a curated list as a named, portable profile: apply it to a second phone, pull it back after a factory reset, export it as JSON, share it. It stores package names only and resolves every rating from the database each time, so a profile never carries stale ratings. On import and on apply, every package goes back through the guard, and a file with a malformed package name is rejected whole rather than applied in part. `--from-device` saves what a phone debloated by hand already has uninstalled, so there is finally a record of it. |
+| [`scripts/debloat.sh`](scripts/debloat.sh) | Applies a plan: refuses anything protected, batches of five, a health check between batches, stops after three consecutive failures, verifies each removal, and writes the restore record before the first one. |
 | [`scripts/restore.sh`](scripts/restore.sh) | Puts a session back, all of it or one package or every session on record, and verifies each one. |
 | [`tools/report.py`](tools/report.py) | Compares the two snapshots and the two package lists. Spots packages that came back on their own, and says which numbers are real. |
 | [`tools/check.py`](tools/check.py) | Compares the phone with the plan that was applied, for what a system update put back. `--fix` re-applies it; `--quiet` is an exit code for a scheduled job. |
@@ -283,15 +272,13 @@ breaks the parse before a single line runs.
 
 </details>
 
-<a id="how-the-scripts-protect-your-phone"></a>
-
 <details>
 <summary><b>How the scripts protect your phone</b></summary>
 
-Four checks stand between a plan and a package, and a package has to clear all four.
+Three checks stand between a plan and a package, and a package has to clear all three.
 
 **1. The never-touch list.** [`database/essential_packages.json`](database/essential_packages.json)
-holds 207 entries covering phone calls, SMS, emergency alerts, SIM services, Wi-Fi, Bluetooth,
+holds 202 entries covering phone calls, SMS, emergency alerts, SIM services, Wi-Fi, Bluetooth,
 camera, keyboard, launcher, Settings, Play Store, Play Services, keystore, system UI, the setup
 wizard and permission management. A package on it is refused. There is no flag to override this,
 and the scripts refuse to run at all if the file is missing or parses as empty, rather than
@@ -299,32 +286,30 @@ proceeding without a guard.
 
 **2. The protected-name pattern.** An unusual ROM has packages no list has seen. Anything whose
 name matches a protected category is also refused: `systemui`, `telephony`, `dialer`, `incallui`,
-`inputmethod`, `keystore`, `launcher`, `setupwizard` and twenty more, plus build-time
+`inputmethod`, `keystore`, `launcher`, `setupwizard` and a dozen more, plus build-time
 infrastructure such as runtime resource overlays, framework resources, GPU drivers and graphics
 layers. A OnePlus 10 Pro carries more than thirty of those, none of them an app anyone installed.
+`CYM_ALLOW_PROTECTED=1` relaxes this one check for the rare ROM that names a theme store
+`...launcher.themes`. It does not relax the never-touch list.
 
-`CYM_ALLOW_PROTECTED=1` relaxes this one check in `debloat.sh` and `debloat.ps1`, for the rare ROM
-that names a theme store `...launcher.themes`. The scan still leaves such a package out of the
-plan, so add its line by hand. It does not relax the never-touch list.
-
-The pattern is written out in four files on purpose: [`scripts/lib.sh`](scripts/lib.sh),
-[`scripts/lib.ps1`](scripts/lib.ps1), [`tools/cym.py`](tools/cym.py) and the app's `Guard.kt`. No
-single file being wrong or missing can disarm the guard, and `tools/sync_guard.py` checks that they
-agree.
+This pattern is written out in three files, [`scripts/lib.sh`](scripts/lib.sh),
+[`scripts/lib.ps1`](scripts/lib.ps1) and [`tools/cym.py`](tools/cym.py), on purpose. The
+duplication means no single file being wrong or missing can disarm the guard.
 
 **3. What the phone is using right now.** `tools/scan.py` asks the phone which launcher owns HOME
 and which keyboard is the active input method, and drops both from the plan whatever the database
-says about them. `scripts/debloat.sh` checks that something answers HOME before it starts, warning
-if it cannot confirm it, and again after it finishes, reinstalling a launcher straight away if
-nothing does.
+says about them. `scripts/debloat.sh` checks that something still answers HOME before it starts and
+again after it finishes.
 
-**4. System apps only.** A package that is not a system app was installed by the owner, or placed
-in `/data` by the manufacturer as an ordinary app. There is no system copy underneath it, so
-`pm uninstall -k --user 0` would delete the only one and `cmd package install-existing` could not
-bring it back. `tools/scan.py` lists those and leaves them out of the plan, and
-`scripts/debloat.sh` reports them as "Left alone" if a hand-written plan names one.
+**4. System apps only.** A package that `pm list packages -3` returns is not a system app: the
+owner installed it, or the manufacturer placed it in `/data` as an ordinary app. There is no
+system copy underneath it, so `pm uninstall -k --user 0` would delete the only one and
+`cmd package install-existing` could not bring it back. `tools/scan.py` lists those and leaves
+them out of the plan, and `scripts/debloat.sh` refuses them if a hand-written plan names one. On
+an OPPO A3x this is what kept several apps the owner had installed from the Play Store, all of
+which match "partner preload" rows in the database, out of a recommended plan.
 
-**While it runs:** batches of five with a health check between each, which sends HOME and then
+On top of that: batches of five with a health check between each, which sends HOME and then
 confirms the package service still answers, because a phone that cannot run `cmd package` cannot be
 restored either; an automatic attempt to put the last batch back if that check fails; and a stop
 after three consecutive failures, since that means something systemic changed rather than one
@@ -338,9 +323,8 @@ up and saw `Expert` would offer to remove what the other guard refuses.
 
 ## What a scan looks like
 
-Output from a OnePlus 10 Pro running OxygenOS 16 with 439 packages installed, shortened, from an
-earlier version of the tools. Today's scan also reports regular apps it leaves alone and packages
-already removed before the scan. Nothing is changed at this stage:
+Real output, from a OnePlus 10 Pro running OxygenOS 16 with 439 packages installed. Nothing is
+changed at this stage:
 
 ```
 $ python tools/scan.py --plan
@@ -360,33 +344,29 @@ What the database recognises on this phone
 
 The plan: 28 package(s) at level 'recommended'
 
-  Telemetry and analytics (7)
-    * com.oplus.stdid
-      Standard ID Service - Serves a tracking identifier to preinstalled apps
-      If removed: Preinstalled apps lose a device-level advertising identifier.
-    ...
-
-  Partner and third-party preloads (4)
-    * com.teamviewer.quicksupport.market
-      TeamViewer QuickSupport - Lets a helper view your screen remotely
-      If removed: Remote support sessions stop being possible. Nothing else changes.
-    ...
-
   Advertising (1)
     * com.heytap.pictorial
       Lock Screen Magazine - Pushes sponsored wallpapers to the lock screen
       If removed: The lock screen stops rotating sponsored wallpapers.
 
+  Telemetry and analytics (7)
+    * com.oplus.stdid
+      Standard ID Service - Serves a tracking identifier to preinstalled apps
+      If removed: Preinstalled apps lose a device-level advertising identifier.
+
+  Partner and third-party preloads (4)
+    * com.teamviewer.quicksupport.market
+      TeamViewer QuickSupport - Lets a helper view your screen remotely
+      If removed: Remote support sessions stop being possible. Nothing else changes.
+
 Kept back: 112 package(s)
   x android                                        on the never-touch list
   x com.android.cellbroadcastreceiver              on the never-touch list
-  x com.android.launcher                           on the never-touch list
   x com.oplus.securitykeyboard                     on the never-touch list
-  ...
+  x com.android.launcher                           on the never-touch list
 ```
 
-Every line says what you lose, not just what goes. Then the dry run, which also changes nothing on
-the phone:
+Every line says what you lose, not just what goes. Then the dry run, which also changes nothing:
 
 ```
 $ bash scripts/debloat.sh backups/<session>/plan.txt --dry-run
@@ -401,7 +381,6 @@ $ bash scripts/debloat.sh backups/<session>/plan.txt --dry-run
 Batch 1 of 6
   [ 1/28] com.heytap.pictorial                             would uninstall
   [ 2/28] com.coloros.compass2                             would uninstall
-  ...
 
  DRY RUN - nothing on the phone was changed
 ```
@@ -410,8 +389,7 @@ Batch 1 of 6
 <summary><b>And the report it writes at the end</b></summary>
 
 `tools/report.py` compares the two snapshots and writes `report.md`, `report.json` and
-`report.txt`. The figures below are an example, not a measurement of the phone above, and show six
-of the twelve rows:
+`report.txt`. The figures below are an example, not a measurement of the phone above:
 
 ```
 $ python tools/report.py
@@ -429,8 +407,6 @@ Honest reading of these numbers
   47 fewer packages is the one number that is exactly true.
   More free RAM is real, but Android fills free RAM with cache by
   design, so this figure drifts on its own. Measure it twice.
-  Fewer apps holding location, camera, mic and contacts is the
-  most meaningful privacy change here.
   Battery life cannot be measured in minutes. Fewer background
   services means less wakeup work, but judge it over a few days.
 ```
@@ -447,10 +423,10 @@ A phone that stops working against you.
 |---|---|
 | **Lock screen advertising** | Xiaomi's wallpaper carousel, the vivo and OPPO magazine, Glance. The lock screen stops selling you things. |
 | **Advertising inside system apps** | MIUI's MSA framework, OPPO's ad service, the sponsored cards in the swipe-right panel. |
-| **Advertising notifications** | On Tecno, Infinix and itel phones most of it comes from one game portal, `net.bat.store`, and the preinstalled browsers. |
+| **Advertising notifications** | On Tecno and Infinix phones the worst offender is a single package. |
 | **Telemetry** | Analytics, usage reporting, diagnostic uploads and crash telemetry going to the manufacturer. |
 | **Duplicated apps** | The manufacturer's browser, gallery, music player, file manager, notes and calculator that you never open because you already have better ones. |
-| **Partner preloads** | Facebook's background services, preinstalled games, shopping apps, and the installer that keeps adding more of them, where the manufacturer installed them as system apps. Ones dropped in as ordinary apps are listed for you to uninstall from the home screen. |
+| **Partner preloads** | Facebook's background services, preinstalled games, shopping apps, and the installer that keeps adding more of them. |
 | **Carrier apps** | Account apps, support apps, and the folder of sponsored apps on the home screen. |
 
 And a measurement of what changed rather than a claim about it:
@@ -461,40 +437,35 @@ And a measurement of what changed rather than a claim about it:
 | Apps holding location, camera, microphone, contacts and SMS permissions | Running services and processes | Any multiple of "faster" |
 | Which advertising is gone | Free storage, which barely moves because the system copy stays | A benchmark score |
 
-The report's closing "Honest reading of these numbers" is printed by the tool rather than written
-by hand, so it cannot drift into marketing: it calls the package count the one exact number, warns
-that free RAM and the process count drift, and says battery life cannot be measured in minutes.
+The report says which is which, in those words. It is printed by the tool rather than written by
+hand, so it cannot drift into marketing.
 
 ## Supported phones
 
-Anything running **Android 7 or newer** with developer options available; the app needs Android 8.
-The database covers these brand families by name:
+Anything running **Android 7 or newer** with developer options available. The database covers these
+brand families by name:
 
 | Brand | Packages | OS | Main targets |
 |---|---:|---|---|
-| **Samsung** | 92 | One UI | Bixby, AR Zone, AR Emoji, Samsung Free, Galaxy Store |
+| **Samsung** | 92 | One UI | Bixby, AR Zone, Samsung Free, Galaxy Store, Knox extras |
 | **OnePlus** | 81 | OxygenOS | Shelf, HeyTap remnants, ColorOS telemetry, factory test tools |
 | **Xiaomi, Redmi, POCO** | 62 | MIUI, HyperOS | MSA ad framework, wallpaper carousel, App Vault, analytics |
-| **Google, Pixel** | 53 | Stock Android | Unused Google apps, Android System Intelligence, Chrome |
-| **OPPO** | 63 | ColorOS | HeyTap, lock screen magazine, ad service, Theme Store |
+| **Google, Pixel** | 52 | Stock Android | Unused Google apps, Android System Intelligence, Chrome |
+| **OPPO** | 37 | ColorOS | HeyTap, lock screen magazine, ad service, Theme Store |
 | **vivo, iQOO** | 36 | Funtouch OS, OriginOS | Jovi, V-Appstore, magazine, EasyShare |
 | **Motorola, Lenovo** | 19 | Near-stock | Moto Genie, Gametime, Device Help, Moto Voice |
-| **Huawei, Honor** | 19 | EMUI, MagicOS | Huawei Video, Huawei and Honor Reader, SkyTone, AppGallery, Honor App Market |
+| **Huawei, Honor** | 19 | EMUI, MagicOS | Huawei and Honor Video, Reader, SkyTone, App Market |
 | **realme** | 13 | realme UI | HeyTap, realme Store, Game Space |
 | **ASUS** | 12 | ZenUI | Game Center, log uploader, duplicated apps |
-| **Tecno, Infinix, itel** | 9 | HiOS, XOS | Game portal, Phoenix Browser, Carlcare |
+| **Tecno, Infinix, itel** | 9 | HiOS, XOS | Advertising notifications, Phoenix Browser, Carlcare |
 | **Nothing** | 1 | Nothing OS | Very little. Nothing OS is already clean |
 | **Carrier** | 21 | any | Verizon, T-Mobile, AT&T, Jio, Airtel, Vodafone |
-| **Universal** | 69 | any | Facebook services, Microsoft Office, preinstalled games and shopping |
+| **Universal** | 64 | any | Facebook services, Microsoft Office, preinstalled games and shopping |
 
-The rows add up to 550 rather than 537 because a few packages shared between brands, such as the
-HeyTap apps, are listed under each of them.
-
-**Your brand not listed?** The universal, Google and carrier entries still apply. The scan counts
-every package it does not recognise, lists the ones whose names look suspicious with the reason,
-and prints them all with `--show-unknown`: evidence for you to judge, never something it removes on
-its own. Add your brand afterwards and the next person with your phone skips that step:
-[CONTRIBUTING.md](CONTRIBUTING.md).
+**Your brand not listed?** The universal, Google and carrier entries still apply, and the scan
+reports every package it does not recognise with the reason it looks suspicious, as evidence for
+you to judge rather than as something it removes on its own. Add your brand afterwards and the next
+person with your phone skips that step: [CONTRIBUTING.md](CONTRIBUTING.md).
 
 **Not supported:** iPhones, and any phone where an employer's management profile has removed
 developer options. On a work-managed phone, don't: see [Safety](#safety).
@@ -508,7 +479,7 @@ developer options. On a work-managed phone, don't: see [Safety](#safety).
 | **No root, ever** | No `su`, no exploit, no bootloader unlock, no system partition write, no boot image touched. This cannot brick a phone. |
 | **The restore record comes first** | Written before the first removal and appended as each package comes off. If the run dies halfway, the record already covers everything up to that point. |
 | **A factory reset is the floor** | It always works, and every system package comes back, because none of them were ever deleted. |
-| **Nothing leaves your computer** | No telemetry and no API calls, and the app has no internet permission. The only network use is installing adb when it is missing: through Homebrew or your package manager where there is one, otherwise from `dl.google.com`. |
+| **Nothing leaves your computer** | No telemetry, no API calls, no network access from the phone. The only outbound request in the project is downloading the platform tools from `dl.google.com`, and only if adb is missing. |
 | **Never touched** | Phone and dialer · SMS and MMS · emergency alerts · SIM services · Wi-Fi · Bluetooth · camera · keyboard · home launcher · Settings · Play Store · Play Services · keystore and security · system UI · setup wizard · permission management |
 
 Every package carries a rating, and you choose how far a plan goes:
@@ -521,14 +492,13 @@ Every package carries a rating, and you choose how far a plan goes:
 | **Unsafe** | Never removed. Listed so a scan can report that it saw it. | never |
 
 **Two cases where you should not do this.** A phone managed by your employer, or with a work
-profile: removing Device Policy components breaks the management and may breach their policy.
-Android Device Policy is rated Expert, and Samsung's Knox work-profile container is on the
-never-touch list. And a phone under warranty where you are about to make a claim: changing a
-phone's software can affect support.
+profile: removing Knox or Device Policy components breaks the management and may breach their
+policy. And a phone under warranty where you are about to make a claim. Nothing here is detectable
+after a factory reset, but the honest answer is that changing a phone's software can affect support.
 
 **Two things a restore cannot undo**, both rated Expert and both saying so in the database: data
-left inside Samsung's Secure Folder when you remove it, and NFC transit or access cards provisioned
-to a manufacturer's wallet, such as Mi Pay transit cards. Move those out first. The full list is in
+left inside a Secure Folder or Knox container when you remove it, and NFC transit or access cards
+provisioned to a manufacturer's wallet. Move those out first. The full list is in
 [docs/RESTORE.md](docs/RESTORE.md#what-a-restore-cannot-undo).
 
 ## Restoring your phone
@@ -544,12 +514,12 @@ bash scripts/restore.sh --all                      # all of them, oldest first
 
 | What | How |
 |---|---|
-| **A record comes first** | Before `scripts/debloat.sh` removes anything it creates the session record under `backups/`, and each package is added the moment it comes off. |
+| **A record comes first** | Before `scripts/debloat.sh` changes anything it writes down what it is about to do, in the session directory under `backups/`. |
 | **It verifies** | A package counts as restored only when it is installed for your user and not disabled, rather than because the command returned success. |
 | **It reads the record** | Not a generated script, so it still works if that was edited or lost. |
 | **It tries both routes** | A package may have been uninstalled or disabled, and running the wrong undo is a no-op. |
-| **No computer?** | The phone's own Settings → Apps page, with system apps shown, can re-enable a disabled app, and often reinstall a removed one. |
-| **Factory reset** | The guaranteed floor; see [Safety](#safety). |
+| **No computer?** | The phone's own Settings → Apps page, with system apps shown, can re-enable packages too. |
+| **Factory reset** | The guaranteed floor. Every system package comes back, because none were deleted. |
 
 **More:** [docs/RESTORE.md](docs/RESTORE.md) has what the record holds, why this is reversible at
 all, what to do when a package will not come back, and the handful of things a restore genuinely
@@ -569,14 +539,13 @@ python tools/check.py --quiet   # exit code only, for a scheduled job
 ```
 
 `--fix` goes through the same guard, so a hand-edited plan still cannot reach a protected package.
-Run against a session, its result is appended to that session's log with the new patch level, so a
-phone's history stays in one place.
+The result is appended to the session's log with the new patch level, so a phone's history stays in
+one place.
 
 A few database entries remove the manufacturer's updater, among them Motorola's
-`com.motorola.ccc.ota` and OnePlus's `com.oplus.ota`, plus `com.oplus.sau`, which updates the
-preinstalled apps. They are rated Expert, they say so in their `if_removed` text, and they only
-enter a plan at `--level expert`. Removing one means the phone stops receiving security patches,
-not just features.
+`com.motorola.ccc.ota` and OnePlus's `com.oplus.sau`. They are rated Expert, they say so in their
+`if_removed` text, and they are never in a conservative plan. Removing one means the phone stops
+receiving security patches, not just features.
 
 **More:** [docs/FIRMWARE.md](docs/FIRMWARE.md) has the exit codes, a weekly check, and finding the
 new preloads an update added that no plan mentions.
@@ -590,15 +559,14 @@ three that matter most:
   and it cannot appear while the screen is locked. Unlock it, replug, and watch the screen. If the
   dialog never comes, use Developer options → **Revoke USB debugging authorizations** and try again.
 - **Notifications from one app stopped.** A manufacturer push service went with the removal:
-  `com.heytap.mcs` on OPPO and other ColorOS-based phones that ship it, `com.vivo.pushservice` on
-  vivo. Xiaomi's `com.xiaomi.xmsf` is on the never-touch list, so it is never removed. Apps that use
-  Firebase are unaffected, which is why this only ever hits preinstalled ones. Put the one package
-  back with `bash scripts/restore.sh --package com.heytap.mcs`.
+  `com.heytap.mcs` on OPPO, OnePlus and realme, `com.vivo.pushservice` on vivo, `com.xiaomi.xmsf`
+  on Xiaomi. Apps that use Firebase are unaffected, which is why this only ever hits preinstalled
+  ones. Put the one package back with `bash scripts/restore.sh --package com.heytap.mcs`.
 - **`Failure [DELETE_FAILED_INTERNAL_ERROR]`.** The ROM is refusing. Usually the app is a device
   administrator, which you turn off in Settings → Security first, or a work profile owns it. Try
   `--disable` instead, which some ROMs accept where `uninstall` is blocked.
 
-Nothing here can brick a phone, and `adb reboot` fixes most of it.
+Nothing here can brick a phone. `adb reboot` fixes most of it, because nothing was deleted.
 
 ## Questions people ask
 
@@ -610,10 +578,9 @@ No, and the reason is structural rather than a promise. Nothing is deleted: `pm 
 stays exactly where it was. No root is used, no partition is written, and no boot image is touched.
 
 Worst realistic case: the phone misbehaves, you reboot it, and if that is not enough you run the
-restore script. If the phone will not talk to a computer at all, its own Settings → Apps page, with
-system apps shown, can re-enable a disabled app and often reinstall a removed one. A factory reset
-is a guaranteed floor and brings back every system package, because none were ever removed from the
-system image.
+restore script. If the phone will not talk to a computer at all, its own Settings → Apps page can
+re-enable things with no computer involved. A factory reset is a guaranteed floor and brings back
+every system package, because none were ever removed from the system image.
 
 </details>
 
@@ -637,9 +604,8 @@ Some of it is real and some of it is not, and the report separates the two rathe
 you.
 
 Real and measured: fewer packages, fewer apps holding your location, camera, microphone, contacts
-and SMS permissions, and the specific advertising that is now gone. You notice the last one the same
-day. Fewer running services is real too, but noisy: the after snapshot is taken on a freshly booted
-phone.
+and SMS permissions, fewer running services, and the specific advertising that is now gone. You
+notice the last one the same day.
 
 Real but slow: battery life. Fewer background services means less wakeup work, but it cannot be
 measured in an hour. Judge it over a few days.
@@ -657,9 +623,8 @@ Anyone promising a multiple of "faster" is selling something.
 <summary><b>Will banking and payment apps still work?</b></summary>
 
 Normally yes. Removing apps for your user profile does not change the system image and does not
-trip Play Integrity by itself. What can cause trouble is removing Samsung Knox components, rated
-Expert or Unsafe here, or Play Services, which the guard's name pattern refuses outright. Neither
-is ever in a plan at the default `recommended` level.
+trip Play Integrity by itself. What can cause trouble is removing Samsung Knox components or parts
+of Play Services, both rated Expert or Unsafe here and never in a conservative plan.
 
 If a banking app starts refusing after a run, restore the session and re-run at
 `--level recommended`.
@@ -670,10 +635,12 @@ If a banking app starts refusing after a run, restore the session and re-run at
 <summary><b>What about my work phone?</b></summary>
 
 Don't. A phone managed by your employer has a device policy controller that this would interfere
-with, removing Device Policy components breaks the management, and it may be against the policy you
-agreed to. A personal phone with a work profile gets the same treatment: the prompt asks about both
-and offers only the most conservative level when the answer is yes. The tools only ever act on your
-own user (`--user 0`), never on the work profile.
+with, removing Knox or Device Policy components breaks the management, and it may be against the
+policy you agreed to. The prompt asks about this and will offer only the most conservative level
+when you say yes.
+
+A personal phone that merely has a work profile is less dramatic, but packages owned by that
+profile cannot be removed from your user anyway.
 
 </details>
 
@@ -701,16 +668,15 @@ adb shell settings put global animator_duration_scale 0.5
 ```
 
 The before snapshot records your original values under **Animation scales**. The restore script
-does not revert these, because they are not package changes, so put them back by hand with the
-recorded values; the stock value is `1.0`.
+does not revert these, because they are not package changes, so put them back by hand with `1.0`.
 
 </details>
 
 <details>
 <summary><b>I already debloated my phone by hand. Is there anything here for me?</b></summary>
 
-Yes. `pm list packages` does not list what you uninstalled, so you have no record of what came
-off. `tools/scan.py` shows an **Already removed** count, and
+Yes. `pm list packages` does not list what you uninstalled, so a scan sees a clean phone and you
+have no record of what came off. `tools/scan.py` now prints an **Already removed** count, and
 
 ```bash
 python tools/preset.py save my-phone --from-device
@@ -719,22 +685,16 @@ python tools/preset.py show my-phone
 
 turns those removals into a named preset: every system package uninstalled for your user, with
 the database's name and `if_removed` line beside each one, and the ones the database does not know
-marked as such. Regular apps you uninstalled are left out, because they have no system copy and this
-project never touches them. Add `--include-disabled` to take the system apps you switched off as
-well.
-
-To use it on a second phone, `python tools/preset.py apply my-phone --device --out plan.txt` writes
-a plan for that phone, which you then run through `scripts/debloat.sh plan.txt --dry-run` as usual.
-Or share the preset.
+marked as such. Apply it to a second phone with `preset.py apply my-phone --device`, or share it.
+Regular apps you uninstalled are left out, because they have no system copy and this project never
+touches them. Add `--include-disabled` to take the system apps you switched off as well.
 
 </details>
 
 <details>
 <summary><b>Is there an app that does this on the phone itself?</b></summary>
 
-Yes, and this project has one: [`CleanYourMobile.apk`](CleanYourMobile.apk), described in
-[The Android app](#the-android-app). It is a reference implementation, though, and the command-line
-scripts are the main, better-tested path.
+Yes — just not this one, which is a set of scripts that run on a computer.
 
 Removing a system app needs shell-level privileges. An app on the phone gets them one of two ways:
 root, or [Shizuku](https://shizuku.rikka.app/), which on **Android 11 and newer** starts from the
@@ -742,13 +702,13 @@ phone's own Wireless debugging with no computer and no second device involved. T
 Android clears it on every reboot, so you restart Shizuku each time you restart the phone unless
 you are rooted.
 
-For everyday use, [Canta](https://github.com/samolego/Canta) is the more mature app, and it also
-has a web version that drives a phone over USB from a Chromium browser with nothing installed at
-all. [Universal Android Debloater](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation)
+[Canta](https://github.com/samolego/Canta) is the app to use for that, and it also has a web
+version that drives a phone over USB from a Chromium browser with nothing installed at all.
+[Universal Android Debloater](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation)
 is the desktop equivalent. Both are independent projects, not affiliated with this one, and this
 database credits their lists as a source.
 
-See [how they compare](#how-does-this-compare-to-canta-and-shizuku) for which to pick.
+See [how the two compare](#how-does-this-compare-to-canta-and-shizuku) for which to pick.
 
 </details>
 
@@ -759,19 +719,18 @@ See [how they compare](#how-does-this-compare-to-canta-and-shizuku) for which to
 
 They solve the same problem from opposite ends, and for a lot of people Canta is the better
 answer. [Canta](https://github.com/samolego/Canta) is an Android app (LGPL-3.0, Android 9+) that
-uses Shizuku for shell privileges and runs on the phone. This is mainly a scripted toolkit that
-drives ADB from a computer, with a reference Android app that runs the same database and guard on
-the phone.
+uses Shizuku for shell privileges and runs on the phone. This is a scripted toolkit that drives
+ADB from a computer.
 
 | | Canta | CleanYourMobile |
 |---|---|---|
-| **Runs on** | The phone itself, via Shizuku. Also a web version over USB | A computer over ADB, or the phone via Shizuku with the reference app |
-| **Needs a computer** | No, on Android 11+ | For the scripts, yes. For the app, no on Android 11+ |
-| **Interface** | A GUI you tap through | A CLI, a coding assistant driving it, or the reference app |
-| **Setup** | Install the app, start Shizuku, restart it after each reboot | Scripts: enable USB debugging, clone the repo. App: install it and start Shizuku |
+| **Runs on** | The phone itself, via Shizuku. Also a web version over USB | A computer, over ADB |
+| **Needs a computer** | No, on Android 11+ | Yes |
+| **Interface** | A GUI you tap through | A CLI, or a coding assistant driving it |
+| **Setup** | Install the app, start Shizuku, restart it after each reboot | Enable USB debugging, clone the repo |
 | **Package data** | The Universal Debloat List | This repository's own database, with an `if_removed` line per package |
-| **Hard refusal of critical packages** | No. It surfaces recommendations and lets you decide — its own README warns that removing critical apps can bootloop the phone | Yes. 207 never-touch entries with no override, plus a name pattern, a live launcher and keyboard check, and system apps only |
-| **Batching and health checks** | No | In the scripts: five at a time, package service verified between batches, stops after three consecutive failures. Present in the app but not yet tested at scale |
+| **Hard refusal of critical packages** | No. It surfaces recommendations and lets you decide — its own README warns that removing critical apps can bootloop the phone | Yes. 202 never-touch entries with no override, plus a name pattern and a live launcher/keyboard check |
+| **Batching and health checks** | No | Five at a time, package service verified between batches, stops after three consecutive failures |
 | **Before and after measurement** | No | RAM, storage, services, and permission-holder counts, with the noisy figures labelled as noisy |
 | **Post-update drift** | Detects apps you previously removed | `tools/check.py` diffs against the applied plan and `--fix` re-applies it |
 | **Maturity** | Thousands of users, on F-Droid and Play | Much newer and far less battle-tested |
@@ -806,7 +765,7 @@ due: CleanYourTV is why this exists.
 ## Project layout
 
 ```
-Clean-Your-Mobile/
+clean-your-mobile/
 ├── PROMPT.md                     # paste this to your coding assistant
 ├── AGENTS.md                     # the rules an agent must follow, binding
 ├── CONTRIBUTING.md               # how to add packages and brand profiles
@@ -814,10 +773,9 @@ Clean-Your-Mobile/
 ├── SECURITY.md                   # what counts as a vulnerability, and how to report it
 ├── .github/                      # issue templates and the pull request checklist
 ├── database/
-│   ├── debloat_db.json           # 537 packages: what they are, what you lose
-│   ├── essential_packages.json   # 207 never-touch entries, no override
-│   ├── brand_profiles.json       # 13 brand profiles and their quirks
-│   └── schema/                   # JSON Schemas for debloat_db and essential_packages
+│   ├── debloat_db.json           # 505 packages: what they are, what you lose
+│   ├── essential_packages.json   # 202 never-touch entries, no override
+│   └── brand_profiles.json       # 13 brand profiles and their quirks
 ├── scripts/                      # anything that talks to the phone
 │   ├── lib.sh / lib.ps1          # the adb wrapper, sessions, and the guard
 │   ├── setup_adb.sh / .ps1
@@ -832,9 +790,7 @@ Clean-Your-Mobile/
 │   ├── scan.py                   # scan and build a plan
 │   ├── report.py                 # before and after
 │   ├── check.py                  # what a system update put back
-│   ├── validate_db.py            # database integrity
-│   └── sync_guard.py             # keeps the four copies of the guard in step
-├── presets/                      # shared removal profiles, read by preset.py
+│   └── validate_db.py            # database integrity
 ├── CleanYourMobile.apk           # the Android app, built and ready to install
 ├── android/                      # its source: Kotlin, Shizuku, the 4th guard copy
 ├── docs/
@@ -844,8 +800,7 @@ Clean-Your-Mobile/
 │   ├── FIRMWARE.md               # system updates that undo your work
 │   ├── banner.png                # the banner at the top of this page
 │   └── app/                      # screenshots of the Android app
-├── assets/                       # banner.svg, an earlier banner the README no longer uses
-└── backups/                      # one directory per session, created on your computer
+└── backups/                      # one directory per session, git-ignored
 ```
 
 ## Contributing
@@ -882,7 +837,7 @@ The [pull request template](.github/PULL_REQUEST_TEMPLATE.md) lists these, plus 
 | For | Where |
 |---|---|
 | **My phone is misbehaving right now** | [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) first — nothing is deleted, so a reboot fixes most of it |
-| **Is it safe to remove X?** | `python tools/explain.py <package>` first, then a [Package issue](../../issues/new?template=package.yml) |
+| **Is it safe to remove X?** | [Discussions](https://github.com/0xgh0stri13y/Clean-Your-Mobile/discussions) |
 | **A package to add or correct** | [Package issue](../../issues/new?template=package.yml) |
 | **A brand with no profile** | [Brand issue](../../issues/new?template=brand.yml) |
 | **Something went wrong** | [Bug report](../../issues/new?template=bug.yml) |
@@ -896,16 +851,15 @@ The [pull request template](.github/PULL_REQUEST_TEMPLATE.md) lists these, plus 
 - It works only through switches the phone offers its owner: developer options, ADB debugging, and
   Android's own `pm disable-user` and `pm uninstall --user 0`, the same switch as
   Settings → Apps → Disable. It does not root the phone, unlock a bootloader, flash firmware, or
-  bypass any lock, DRM or copy protection. This repository contains no manufacturer software or
-  firmware; the only APK is this project's own app.
+  bypass any lock, DRM or copy protection, and this repository contains no manufacturer software,
+  firmware or APKs.
 - Nothing is deleted, and `scripts/restore.sh` puts it back. You run it on a phone you own, at your
   own risk, and changing a phone's software may affect its warranty or support.
 - Everything here is provided as is, without warranty of any kind, under the MIT licence below.
 
 ## Licence
 
-MIT, see [`LICENSE`](LICENSE). Copyright 2026 [0xgh0stri13y](https://github.com/0xgh0stri13y) and
-Clean Your Mobile contributors.
+MIT, see [`LICENSE`](LICENSE). Copyright 2026 [0xgh0stri13y](https://github.com/0xgh0stri13y).
 
 Package ratings draw on, and credit, the community lists that came first:
 [Universal Android Debloater](https://github.com/Universal-Debloater-Alliance/universal-android-debloater-next-generation),

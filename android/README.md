@@ -14,7 +14,7 @@ It runs on the phone itself, so no computer is needed once Shizuku is started.
 
 | | |
 |---|---|
-| **Reads the real database** | 537 audited packages, copied in from the main repository at build time |
+| **Reads the real database** | 505 audited packages, copied in from the main repository at build time |
 | **Detects the brand** | Same scoring as `tools/cym.py`, including the alias bonus that catches "Redmi" and "iQOO" |
 | **Shows what you lose** | Every row carries its `if_removed` line, not just a package name |
 | **Refuses what it must** | The same three layers: never-touch list, protected-name pattern, and the launcher and keyboard in use right now |
