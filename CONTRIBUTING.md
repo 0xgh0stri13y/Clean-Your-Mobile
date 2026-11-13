@@ -165,6 +165,7 @@ library only, and check what you changed:
 bash -n scripts/*.sh
 python -c "import ast,glob;[ast.parse(open(f,encoding='utf-8').read(),f) for f in glob.glob('tools/*.py')]"
 python tools/validate_db.py
+python tools/sync_guard.py
 python tools/scan.py --from-list <a saved package list>   # no phone needed
 ```
 

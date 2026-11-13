@@ -119,15 +119,29 @@ restore record live in these scripts; an improvised loop has none of them, and r
 | After an update | `python tools/check.py` |
 | After editing the database | `python tools/validate_db.py` |
 
-The guard itself is in three places, duplicated on purpose so that no single file being wrong can
-disarm it:
+The guard itself is in **four** places, duplicated on purpose so that no single file being wrong
+can disarm it:
 
-- `block_reason()` in [`scripts/lib.sh`](scripts/lib.sh)
+- `block_reason()` in [`scripts/lib.sh`](scripts/lib.sh) - **the source of truth**
 - `Get-BlockReason` in [`scripts/lib.ps1`](scripts/lib.ps1)
 - `Database.block_reason()` in [`tools/cym.py`](tools/cym.py)
+- `Guard.blockReason()` in `android/app/src/main/java/com/cleanyourmobile/Guard.kt`, whose
+  `PROTECTED_PATTERN_SOURCE` is **generated** from `scripts/lib.sh` and must never be hand-edited
 
 **If you add a code path that reaches a removal without passing through one of these, it is a
-bug.** Change one of the three protected-name patterns and you must change all three.
+bug.** Change one of the four protected-name patterns and you must change all four.
+
+Do not do that by hand and hope. After editing `scripts/lib.sh`, run:
+
+```bash
+python tools/sync_guard.py          # verifies all four agree
+python tools/sync_guard.py --fix    # rewrites the PowerShell and Kotlin copies
+```
+
+It must pass before you commit. It also checks the preset package-name rule, which is duplicated
+between [`tools/preset.py`](tools/preset.py) and `Preset.kt` for the same reason: an imported
+preset is untrusted input that reaches a privileged `pm` call, and the phone validates it without
+asking a computer. `--fix` does **not** rewrite that one; edit both by hand.
 
 ---
 
@@ -144,6 +158,7 @@ bug.** Change one of the three protected-name patterns and you must change all t
 bash -n scripts/*.sh
 python -c "import ast,glob;[ast.parse(open(f,encoding='utf-8').read(),f) for f in glob.glob('tools/*.py')]"
 python tools/validate_db.py
+python tools/sync_guard.py
 python tools/scan.py --from-list <a saved package list>     # needs no phone
 ```
 
